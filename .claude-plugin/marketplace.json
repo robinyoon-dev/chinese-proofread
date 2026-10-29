@@ -3,12 +3,12 @@
   "owner": {
     "name": "Yoon Robin"
   },
-  "description": "Claude Code plugin that proofreads Chinese prompts before acting on them",
+  "description": "Claude Code plugin that proofreads Chinese prompts before acting on them · 중국어로 쓴 요청을 먼저 교정한 뒤 수행하는 Claude Code 플러그인입니다",
   "plugins": [
     {
       "name": "chinese-proofread",
       "source": "./plugins/chinese-proofread",
-      "description": "Proofread Chinese prompts before acting on them",
+      "description": "Proofread Chinese prompts before acting on them · 중국어로 쓴 요청을 먼저 교정한 뒤 수행합니다",
       "version": "0.1.0"
     }
   ]

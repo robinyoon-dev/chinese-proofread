@@ -1,8 +1,16 @@
 {
   "name": "chinese-proofread",
   "version": "0.1.0",
-  "description": "Proofread Chinese prompts before acting on them",
+  "description": "Proofread Chinese prompts before acting on them · 중국어로 쓴 요청을 먼저 교정한 뒤 수행합니다",
   "author": {
     "name": "Yoon Robin"
-  }
+  },
+  "keywords": [
+    "chinese",
+    "中文",
+    "proofread",
+    "校对",
+    "language-learning",
+    "중국어"
+  ]
 }
