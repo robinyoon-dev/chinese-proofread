@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: ask Claude to proofread prompts written in Chinese.
 
-A prompt counts as Chinese when it has at least MIN_HAN Han characters, no
-Japanese kana, and Han characters make up at least HAN_RATIO of the Han plus
-Hangul characters. Latin text (code, identifiers) is ignored on purpose.
+A prompt counts as Chinese when it has at least MIN_HANZI hanzi, no Japanese
+kana, and hanzi make up at least HANZI_RATIO of the hanzi plus Hangul
+characters. Latin text (code, identifiers) is ignored on purpose.
 
 Env:
-  CHINESE_PROOFREAD_LANG       language for explanations (default: Korean)
-  CHINESE_PROOFREAD_MIN_HAN    minimum Han characters (default: 4)
-  CHINESE_PROOFREAD_HAN_RATIO  minimum Han / (Han + Hangul) (default: 0.5)
+  CHINESE_PROOFREAD_LANG         language for explanations (default: Korean)
+  CHINESE_PROOFREAD_MIN_HANZI    minimum hanzi (default: 4)
+  CHINESE_PROOFREAD_HANZI_RATIO  minimum hanzi / (hanzi + Hangul) (default: 0.5)
 """
 
 import json
@@ -26,15 +26,20 @@ def main():
     except (ValueError, AttributeError):
         return
 
-    min_han = int(os.environ.get("CHINESE_PROOFREAD_MIN_HAN", "4"))
-    han_ratio = float(os.environ.get("CHINESE_PROOFREAD_HAN_RATIO", "0.5"))
+    min_hanzi = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI", "4"))
+    hanzi_ratio = float(os.environ.get("CHINESE_PROOFREAD_HANZI_RATIO", "0.5"))
     lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
 
-    han = count(prompt, (0x4E00, 0x9FFF), (0x3400, 0x4DBF))
+    hanzi = count(prompt, (0x4E00, 0x9FFF), (0x3400, 0x4DBF))
     kana = count(prompt, (0x3040, 0x30FF))
     hangul = count(prompt, (0xAC00, 0xD7A3))
 
-    if han == 0 or han < min_han or kana > 0 or han / (han + hangul) < han_ratio:
+    if (
+        hanzi == 0
+        or hanzi < min_hanzi
+        or kana > 0
+        or hanzi / (hanzi + hangul) < hanzi_ratio
+    ):
         return
 
     context = (

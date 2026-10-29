@@ -45,8 +45,8 @@ Claude Code에서 다음 명령을 실행합니다.
 | 환경 변수 | 기본값 | 설명 |
 |---|---|---|
 | `CHINESE_PROOFREAD_LANG` | `Korean` | 교정 설명에 사용할 언어입니다. |
-| `CHINESE_PROOFREAD_MIN_HAN` | `4` | 중국어로 판별하는 데 필요한 최소 한자 수입니다. |
-| `CHINESE_PROOFREAD_HAN_RATIO` | `0.5` | 한자와 한글을 합한 글자 수에서 한자가 차지해야 하는 최소 비율입니다. |
+| `CHINESE_PROOFREAD_MIN_HANZI` | `4` | 중국어로 판별하는 데 필요한 최소 한자 수입니다. |
+| `CHINESE_PROOFREAD_HANZI_RATIO` | `0.5` | 한자와 한글을 합한 글자 수에서 한자가 차지해야 하는 최소 비율입니다. |
 
 예를 들어 설명을 영어로 받으려면 `~/.claude/settings.json`에 다음 내용을 추가합니다.
 
