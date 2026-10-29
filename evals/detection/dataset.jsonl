@@ -1,0 +1,122 @@
+{"id": "zh_pure-01", "prompt": "帮我看一下这个函数为什么返回空值", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-02", "prompt": "把测试都跑一遍，看看有没有失败的", "usage": "sentence", "category": "zh_pure", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_pure-03", "prompt": "这个页面加载太慢了，能不能优化一下？", "usage": "sentence", "category": "zh_pure", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_pure-04", "prompt": "我想把登录逻辑拆成一个单独的模块", "usage": "sentence", "category": "zh_pure", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_pure-05", "prompt": "请帮我写一个读取配置文件的函数", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-06", "prompt": "为什么部署以后样式全部乱了", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-07", "prompt": "先别改代码，给我解释一下这个错误是什么意思", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-08", "prompt": "把这个按钮的颜色改成蓝色", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-09", "prompt": "帮我检查一下有没有内存泄漏", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-10", "prompt": "这段代码我看不懂，你能说明一下吗", "usage": "sentence", "category": "zh_pure", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_pure-11", "prompt": "把重复的部分提取出来", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-12", "prompt": "我觉得这个变量名不太好，换一个更清楚的", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-13", "prompt": "帮我写提交信息", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-14", "prompt": "数据库连接老是超时，怎么办", "usage": "sentence", "category": "zh_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_pure-15", "prompt": "给这个类加上单元测试", "usage": "sentence", "category": "zh_pure", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_traditional-01", "prompt": "幫我看一下這個函式為什麼會報錯", "usage": "sentence", "category": "zh_traditional", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_traditional-02", "prompt": "把設定檔的預設值改成十", "usage": "sentence", "category": "zh_traditional", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_traditional-03", "prompt": "這個畫面在手機上顯示不正常", "usage": "sentence", "category": "zh_traditional", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_traditional-04", "prompt": "請幫我寫一個簡單的單元測試", "usage": "sentence", "category": "zh_traditional", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_traditional-05", "prompt": "為什麼程式跑得這麼慢", "usage": "sentence", "category": "zh_traditional", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-01", "prompt": "帮我把`getUserInfo`改成async函数", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-02", "prompt": "在README.md里加一个安装说明", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-03", "prompt": "useEffect里面的依赖数组是不是写错了？", "usage": "sentence", "category": "zh_with_code", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_with_code-04", "prompt": "运行npm test的时候报了TypeError，帮我看看", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-05", "prompt": "把config.py里的DEBUG改成False", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-06", "prompt": "这个API返回的JSON格式不对，status字段应该是数字", "usage": "sentence", "category": "zh_with_code", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_with_code-07", "prompt": "帮我写一个Python脚本，把CSV转换成JSON", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-08", "prompt": "git rebase的时候冲突了，怎么解决", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-09", "prompt": "在Button组件上加一个disabled属性", "usage": "sentence", "category": "zh_with_code", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_with_code-10", "prompt": "把src/utils/date.ts里的formatDate函数改成支持时区", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-11", "prompt": "docker compose up以后容器马上就退出了", "usage": "sentence", "category": "zh_with_code", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_with_code-12", "prompt": "这个SQL查询太慢了：SELECT * FROM orders WHERE user_id = 1", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-13", "prompt": "请用TypeScript重写这个函数", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-14", "prompt": "给detect_chinese.py加一个日志功能", "usage": "sentence", "category": "zh_with_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_with_code-15", "prompt": "帮我看看为什么CI一直失败", "usage": "sentence", "category": "zh_with_code", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_english_substitute-01", "prompt": "跑local server.", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": "TODO 9-1 확인 입력"}
+{"id": "zh_english_substitute-02", "prompt": "帮我fix一下这个bug", "usage": "sentence", "category": "zh_english_substitute", "split": "test", "source": "claude", "note": "TODO 9-1 확인 입력"}
+{"id": "zh_english_substitute-03", "prompt": "把这个function refactor一下", "usage": "sentence", "category": "zh_english_substitute", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_english_substitute-04", "prompt": "deploy到staging", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_english_substitute-05", "prompt": "加一个loading spinner", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_english_substitute-06", "prompt": "写个unit test", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_english_substitute-07", "prompt": "这个page太slow了", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_english_substitute-08", "prompt": "帮我review这个PR", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_english_substitute-09", "prompt": "帮我跑一下unit tests", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": "쌍 E1: 중국어 문장에 영어 단어가 들어감"}
+{"id": "zh_english_substitute-10", "prompt": "给login page加个dark mode", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": "쌍 E2: 중국어 문장에 영어 단어가 들어감"}
+{"id": "zh_english_substitute-11", "prompt": "这个API太slow了，帮我optimize", "usage": "sentence", "category": "zh_english_substitute", "split": "test", "source": "claude", "note": "쌍 E3: 중국어 문장에 영어 단어가 들어감"}
+{"id": "zh_english_substitute-12", "prompt": "先commit再push", "usage": "sentence", "category": "zh_english_substitute", "split": "test", "source": "claude", "note": "쌍 E4: 중국어 문장에 영어 단어가 들어감"}
+{"id": "zh_english_substitute-13", "prompt": "check一下memory leak", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": "쌍 E5: 중국어 문장에 영어 단어가 들어감"}
+{"id": "zh_english_substitute-14", "prompt": "merge到main", "usage": "sentence", "category": "zh_english_substitute", "split": "dev", "source": "claude", "note": "한자 1자"}
+{"id": "zh_korean_substitute-01", "prompt": "跑로컬 서버", "usage": "sentence", "category": "zh_korean_substitute", "split": "test", "source": "claude", "note": "TODO 9-2: 한글 비율 때문에 놓칠 것으로 예상"}
+{"id": "zh_korean_substitute-02", "prompt": "帮我把로컬 서버跑起来", "usage": "sentence", "category": "zh_korean_substitute", "split": "dev", "source": "claude", "note": "TODO 9-2"}
+{"id": "zh_korean_substitute-03", "prompt": "这个버튼颜色改一下", "usage": "sentence", "category": "zh_korean_substitute", "split": "test", "source": "claude", "note": ""}
+{"id": "zh_korean_substitute-04", "prompt": "加一个로딩 화면", "usage": "sentence", "category": "zh_korean_substitute", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_korean_substitute-05", "prompt": "把这个함수拆开", "usage": "sentence", "category": "zh_korean_substitute", "split": "dev", "source": "claude", "note": ""}
+{"id": "zh_korean_substitute-06", "prompt": "把这个로그인 함수拆成两个", "usage": "sentence", "category": "zh_korean_substitute", "split": "test", "source": "claude", "note": "쌍 K1: 중국어 문장에 한국어 단어가 들어감"}
+{"id": "zh_korean_substitute-07", "prompt": "帮我看一下这个버튼为什么不能点", "usage": "sentence", "category": "zh_korean_substitute", "split": "dev", "source": "claude", "note": "쌍 K2: 중국어 문장에 한국어 단어가 들어감"}
+{"id": "zh_korean_substitute-08", "prompt": "在설정 화면里加一个다크 모드", "usage": "sentence", "category": "zh_korean_substitute", "split": "test", "source": "claude", "note": "쌍 K3: 중국어 문장에 한국어 단어가 들어감"}
+{"id": "zh_korean_substitute-09", "prompt": "把데이터베이스 연결超时改成三十秒", "usage": "sentence", "category": "zh_korean_substitute", "split": "dev", "source": "claude", "note": "쌍 K4: 중국어 문장에 한국어 단어가 들어감"}
+{"id": "zh_korean_substitute-10", "prompt": "运行之前先把캐시清掉", "usage": "sentence", "category": "zh_korean_substitute", "split": "dev", "source": "claude", "note": "쌍 K5: 중국어 문장에 한국어 단어가 들어감"}
+{"id": "zh_korean_substitute-11", "prompt": "跑테스트", "usage": "sentence", "category": "zh_korean_substitute", "split": "dev", "source": "claude", "note": "한자 1자"}
+{"id": "zh_korean_substitute-12", "prompt": "改一下변수 이름", "usage": "sentence", "category": "zh_korean_substitute", "split": "dev", "source": "claude", "note": "한자 3자"}
+{"id": "zh_with_pasted_text-01", "prompt": "为什么会出现这个错误？\nTraceback (most recent call last):\n  File \"app.py\", line 3, in <module>\n    import requests\nModuleNotFoundError: No module named 'requests'", "usage": "sentence", "category": "zh_with_pasted_text", "split": "test", "source": "claude", "note": "영어 로그를 붙여 넣은 중국어 요청"}
+{"id": "zh_with_pasted_text-02", "prompt": "帮我看看这个日志：\n[ERROR] 2026-10-28 12:00:01 Connection refused: localhost:5432", "usage": "sentence", "category": "zh_with_pasted_text", "split": "test", "source": "claude", "note": "영어 로그를 붙여 넣은 중국어 요청"}
+{"id": "zh_with_pasted_text-03", "prompt": "这个韩文提示是什么意思？“파일을 찾을 수 없습니다. 경로를 확인하세요.”", "usage": "sentence", "category": "zh_with_pasted_text", "split": "dev", "source": "claude", "note": "한국어 문장을 붙여 넣은 중국어 요청, 한글이 한자보다 많음"}
+{"id": "zh_with_pasted_text-04", "prompt": "测试失败了：\nAssertionError: 3 != 4\nFAILED tests/test_math.py::test_add", "usage": "sentence", "category": "zh_with_pasted_text", "split": "dev", "source": "claude", "note": "영어 로그를 붙여 넣은 중국어 요청"}
+{"id": "zh_with_pasted_text-05", "prompt": "把下面的错误信息翻译成中文：\n권한이 없습니다. 관리자에게 문의하세요.", "usage": "sentence", "category": "zh_with_pasted_text", "split": "dev", "source": "claude", "note": "한국어 문장을 붙여 넣은 중국어 요청"}
+{"id": "zh_short_reply-01", "prompt": "好的", "usage": "reply", "category": "zh_short_reply", "split": "test", "source": "claude", "note": "설계 결정 10번에 따라 짧은 대답은 반응하지 않음"}
+{"id": "zh_short_reply-02", "prompt": "谢谢", "usage": "reply", "category": "zh_short_reply", "split": "dev", "source": "claude", "note": "설계 결정 10번에 따라 짧은 대답은 반응하지 않음"}
+{"id": "zh_short_reply-03", "prompt": "继续", "usage": "reply", "category": "zh_short_reply", "split": "dev", "source": "claude", "note": "설계 결정 10번에 따라 짧은 대답은 반응하지 않음"}
+{"id": "zh_short_reply-04", "prompt": "对", "usage": "reply", "category": "zh_short_reply", "split": "dev", "source": "claude", "note": "설계 결정 10번에 따라 짧은 대답은 반응하지 않음"}
+{"id": "zh_short_reply-05", "prompt": "可以", "usage": "reply", "category": "zh_short_reply", "split": "dev", "source": "claude", "note": "설계 결정 10번에 따라 짧은 대답은 반응하지 않음"}
+{"id": "ko_pure-01", "prompt": "이 함수가 왜 빈 값을 반환하는지 봐 줘", "usage": "none", "category": "ko_pure", "split": "test", "source": "claude", "note": ""}
+{"id": "ko_pure-02", "prompt": "테스트 전부 돌려 보고 실패한 거 알려 줘", "usage": "none", "category": "ko_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_pure-03", "prompt": "로그인 로직을 별도 모듈로 분리하고 싶어", "usage": "none", "category": "ko_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_pure-04", "prompt": "README에 설치 방법 추가해 줘", "usage": "none", "category": "ko_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_pure-05", "prompt": "커밋 메시지 만들어줘", "usage": "none", "category": "ko_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_pure-06", "prompt": "배포하고 나서 스타일이 깨졌어", "usage": "none", "category": "ko_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_pure-07", "prompt": "useEffect 의존성 배열이 맞는지 확인해 줘", "usage": "none", "category": "ko_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_pure-08", "prompt": "좋아, 그렇게 진행해", "usage": "none", "category": "ko_pure", "split": "test", "source": "claude", "note": ""}
+{"id": "ko_pure-09", "prompt": "이 에러 메시지가 무슨 뜻이야?", "usage": "none", "category": "ko_pure", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_pure-10", "prompt": "DB 연결이 자꾸 타임아웃 나", "usage": "none", "category": "ko_pure", "split": "test", "source": "claude", "note": ""}
+{"id": "ko_with_hanzi-01", "prompt": "函数를 하나 더 만들어 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_with_hanzi-02", "prompt": "이 部分은 나중에 고칠게", "usage": "none", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "애매함: 한국어 한자어 部分(부분)과 중국어 部分의 모양이 같음"}
+{"id": "ko_with_hanzi-03", "prompt": "中國語 판별 로직을 점검해 줘", "usage": "none", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "한국어 한자어: 중국어로는 中文이나 汉语라고 씀"}
+{"id": "ko_with_hanzi-04", "prompt": "변수 이름을 漢字로 쓰면 안 되나?", "usage": "none", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "한국어 한자어"}
+{"id": "ko_with_hanzi-05", "prompt": "데이터 處理 속도가 느려", "usage": "none", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "한국어 한자어(번체 모양)"}
+{"id": "ko_with_hanzi-06", "prompt": "테스트에 中, 文, 字 세 글자를 넣어 줘", "usage": "quoted", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "테스트 데이터로 인용"}
+{"id": "ko_with_hanzi-07", "prompt": "한자 범위에 㐀(U+3400)도 포함되는지 확인해 줘", "usage": "quoted", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "글자 자체를 언급"}
+{"id": "ko_with_hanzi-08", "prompt": "這個 같은 번체자가 판별되는지 테스트해 줘", "usage": "quoted", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "글자 자체를 언급"}
+{"id": "ko_with_hanzi-09", "prompt": "이 문서 제목을 「設計 決定」으로 바꿔 줘", "usage": "quoted", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "문서 제목으로 인용"}
+{"id": "ko_with_hanzi-10", "prompt": "社內 위키에 정리해 둔 내용 참고해서 작성해 줘", "usage": "none", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "한국어 한자어"}
+{"id": "ko_with_hanzi-11", "prompt": "이 登录 函数를 두 개로 나눠 줘", "usage": "word", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "쌍 K1: 한국어 문장에 중국어 단어가 들어감"}
+{"id": "ko_with_hanzi-12", "prompt": "这个 按钮이 왜 안 눌리는지 봐 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 K2: 한국어 문장에 중국어 단어가 들어감"}
+{"id": "ko_with_hanzi-13", "prompt": "设置 画面에 暗黑 模式 추가해 줘", "usage": "word", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "쌍 K3: 한국어 문장에 중국어 단어가 들어감"}
+{"id": "ko_with_hanzi-14", "prompt": "数据库 连接 超时를 30초로 바꿔 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 K4: 한국어 문장에 중국어 단어가 들어감"}
+{"id": "ko_with_hanzi-15", "prompt": "运行 전에 缓存부터 지워 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 K5: 한국어 문장에 중국어 단어가 들어감"}
+{"id": "ko_with_hanzi-16", "prompt": "이번 主要 修正 事項은 判別 規則 改善이야", "usage": "none", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "한국어 한자어(번체 모양), 한자가 한글보다 많음"}
+{"id": "ko_with_pasted_chinese-01", "prompt": "이 에러가 무슨 뜻이야?\n错误：找不到模块 'requests'", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_with_pasted_chinese-02", "prompt": "중국 서버 로그인데 해석해 줘:\n[错误] 数据库连接失败，请检查配置", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "test", "source": "claude", "note": ""}
+{"id": "ko_with_pasted_chinese-03", "prompt": "사용자가 이런 문의를 남겼어: \"我的账号无法登录，一直显示密码错误\" 답변 초안 써 줘", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "test", "source": "claude", "note": ""}
+{"id": "ko_with_pasted_chinese-04", "prompt": "이 중국어 문장 번역해 줘: 今天的会议改到下午三点", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "dev", "source": "claude", "note": "번역을 요청한 문장은 사용자가 쓴 문장이 아님"}
+{"id": "ko_with_pasted_chinese-05", "prompt": "테스트 케이스에 \"帮我看一下这个函数为什么返回空值\"를 추가해 줘", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_with_pasted_chinese-06", "prompt": "다음 로그에서 원인을 찾아 줘\n2026-10-28 构建失败：依赖版本冲突\n请升级 webpack 到 5.0 以上", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "dev", "source": "claude", "note": "한자가 한글보다 많음"}
+{"id": "ko_with_pasted_chinese-07", "prompt": "번역 파일 zh.json에 \"保存成功\"과 \"删除失败\" 키가 빠졌어", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_with_pasted_chinese-08", "prompt": "中文校对 블록 형식이 이상해. 原文과 修正 줄이 똑같이 나왔어", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "dev", "source": "claude", "note": ""}
+{"id": "en_with_hanzi-01", "prompt": "add 中 to the font test", "usage": "quoted", "category": "en_with_hanzi", "split": "test", "source": "claude", "note": "TODO 9-1, 9-3 확인 입력, 테스트 데이터로 인용"}
+{"id": "en_with_hanzi-02", "prompt": "Make sure the regex matches 你好", "usage": "quoted", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "TODO 9-3, 정규식이 찾을 문자열로 인용"}
+{"id": "en_with_hanzi-03", "prompt": "Why does len(\"中文\") return 2 in Python?", "usage": "quoted", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "TODO 9-3, 코드 안의 문자열"}
+{"id": "en_with_hanzi-04", "prompt": "rename the 测试 folder to tests", "usage": "quoted", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "TODO 9-3, 폴더 이름으로 인용"}
+{"id": "en_with_hanzi-05", "prompt": "Translate the button label 保存 into Korean", "usage": "quoted", "category": "en_with_hanzi", "split": "test", "source": "claude", "note": "TODO 9-3, 번역할 버튼 문구로 인용"}
+{"id": "en_with_hanzi-06", "prompt": "The hook should ignore prompts like 好的", "usage": "quoted", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "TODO 9-3, 예시 입력으로 인용"}
+{"id": "en_with_hanzi-07", "prompt": "run the 单元 tests for me", "usage": "word", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 E1: 영어 문장에 중국어 단어가 들어감"}
+{"id": "en_with_hanzi-08", "prompt": "add a 暗色 mode to the login page", "usage": "word", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 E2: 영어 문장에 중국어 단어가 들어감"}
+{"id": "en_with_hanzi-09", "prompt": "this API is too 慢, please optimize it", "usage": "word", "category": "en_with_hanzi", "split": "test", "source": "claude", "note": "쌍 E3: 영어 문장에 중국어 단어가 들어감"}
+{"id": "en_with_hanzi-10", "prompt": "commit first, then 推送 to origin", "usage": "word", "category": "en_with_hanzi", "split": "test", "source": "claude", "note": "쌍 E4: 영어 문장에 중국어 단어가 들어감"}
+{"id": "en_with_hanzi-11", "prompt": "check for a 内存 leak", "usage": "word", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 E5: 영어 문장에 중국어 단어가 들어감"}
+{"id": "en_with_hanzi-12", "prompt": "set the default locale to 简体中文", "usage": "quoted", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "영어 요청에 한자 4자, 로캘 이름으로 인용"}
+{"id": "en_or_code-01", "prompt": "run the tests and fix any failures", "usage": "none", "category": "en_or_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "en_or_code-02", "prompt": "git push origin main", "usage": "none", "category": "en_or_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "en_or_code-03", "prompt": "Refactor this function to use async/await", "usage": "none", "category": "en_or_code", "split": "dev", "source": "claude", "note": ""}
+{"id": "en_or_code-04", "prompt": "const x = items.filter(i => i.enabled);", "usage": "none", "category": "en_or_code", "split": "test", "source": "claude", "note": ""}
+{"id": "en_or_code-05", "prompt": "why is CI failing?", "usage": "none", "category": "en_or_code", "split": "dev", "source": "claude", "note": ""}
