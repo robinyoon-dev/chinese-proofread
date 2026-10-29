@@ -42,6 +42,7 @@ from detect_chinese import is_chinese  # noqa: E402
 
 ALLOWED_TOOLS = ["Read", "Edit", "Write", "Glob", "Grep", "Skill"]
 TONE_MARKS = "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ"
+BLOCK = "📝 中文校对"
 FILE_END = "__EVAL_FILE_END__"
 
 # Metric prefixes of grader names, in report order.
@@ -210,17 +211,24 @@ def regrade(config, text):
 def summarize(result_path):
     # Graders on the reply are scored again on all text blocks (the main
     # number); eval's own verdict on the final message is kept alongside.
+    #
+    # A grader that checks something is absent from the block (no pinyin on
+    # the 原文 line, no punctuation note, ...) passes trivially when there is
+    # no block, so a run without a block is left out of its count. none cases
+    # are the exception: having no block is what they check.
     with open(result_path, encoding="utf-8") as f:
         result = json.load(f)
     traces = os.path.join(os.path.dirname(result_path), "traces")
+    kinds = {c["name"]: c["kind"] for c in CASES}
 
-    any_text = defaultdict(lambda: [0, 0])
-    final = defaultdict(lambda: [0, 0])
+    columns = {"any": defaultdict(lambda: [0, 0, 0]),
+               "final": defaultdict(lambda: [0, 0, 0])}
     failures = []
     cost = 0.0
     runs = 0
     for case in result["cases"]:
         configs = {g["name"]: g for g in case["graders"]}
+        kind = kinds.get(case["name"], metric_of(case["name"]))
         for i, run in enumerate(case["arms"]["with"], 1):
             runs += 1
             cost += run.get("costUsd", 0) + run.get("judgeCostUsd", 0)
@@ -228,34 +236,46 @@ def summarize(result_path):
                 failures.append(f"{case['name']}: error: {run['error']}")
                 continue
             trace = os.path.join(traces, f"{case['name']}-{i}.jsonl")
-            text = reply_texts(trace) if os.path.exists(trace) else None
+            have_trace = os.path.exists(trace)
+            shown = {"any": reply_texts(trace) if have_trace else None,
+                     "final": final_reply(trace) if have_trace else None}
             for grader in run["graders"]:
                 metric = metric_of(grader["name"])
                 config = configs[grader["name"]]
                 on_reply = (config["type"] == "regex" and
                             config["config"].get("target", "last_message")
                             == "last_message")
-                passed = grader["passed"]
-                if on_reply and text is not None:
-                    passed = regrade(config["config"], text)
-                for counts, ok in ((any_text[metric], passed),
-                                   (final[metric], grader["passed"])):
-                    counts[1] += 1
-                    counts[0] += ok
-                if not passed:
-                    reason = ("not met in any text block" if on_reply
-                              else grader["explanation"])
-                    failures.append(f"{case['name']}: {grader['name']}: {reason}")
+                needs_block = (on_reply and kind != "none" and
+                               config["config"]["match"] == "not_contains")
+                verdicts = {"any": grader["passed"], "final": grader["passed"]}
+                if on_reply and shown["any"] is not None:
+                    verdicts["any"] = regrade(config["config"], shown["any"])
+                for column, counts in columns.items():
+                    text = shown[column]
+                    if needs_block and text is not None and BLOCK not in text:
+                        counts[metric][2] += 1
+                        continue
+                    counts[metric][1] += 1
+                    counts[metric][0] += verdicts[column]
+                    if column == "any" and not verdicts[column]:
+                        reason = ("not met in any text block" if on_reply
+                                  else grader["explanation"])
+                        failures.append(
+                            f"{case['name']}: {grader['name']}: {reason}")
 
     suite = result["suite"]
     print(f"model {suite.get('modelOverride')}  cases {len(result['cases'])}  "
           f"runs {runs}  cost ${cost:.2f}")
-    print(f"  {'':<24} {'all text blocks':<18} final message only")
+    print(f"  {'':<24} {'all text blocks':<32} final message only")
     for metric, label in METRICS.items():
-        if metric in any_text:
-            cells = [f"{p / t:.3f} ({p}/{t})" for p, t in
-                     (any_text[metric], final[metric])]
-            print(f"  {label:<24} {cells[0]:<18} {cells[1]}")
+        if metric not in columns["any"]:
+            continue
+        cells = []
+        for column in ("any", "final"):
+            passed, total, skipped = columns[column][metric]
+            cell = f"{passed / total:.3f} ({passed}/{total}" if total else "- (0/0"
+            cells.append(cell + (f", {skipped} no block)" if skipped else ")"))
+        print(f"  {label:<24} {cells[0]:<32} {cells[1]}")
     if failures:
         print("\nfailed graders (all text blocks):")
         for line in failures:
