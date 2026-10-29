@@ -1,0 +1,15 @@
+{
+  "name": "chinese-proofread",
+  "owner": {
+    "name": "Yoon Robin"
+  },
+  "description": "Claude Code plugin that proofreads Chinese prompts before acting on them",
+  "plugins": [
+    {
+      "name": "chinese-proofread",
+      "source": "./plugins/chinese-proofread",
+      "description": "Proofread Chinese prompts before acting on them",
+      "version": "0.1.0"
+    }
+  ]
+}

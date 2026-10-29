@@ -1,0 +1,8 @@
+{
+  "name": "chinese-proofread",
+  "version": "0.1.0",
+  "description": "Proofread Chinese prompts before acting on them",
+  "author": {
+    "name": "Yoon Robin"
+  }
+}
