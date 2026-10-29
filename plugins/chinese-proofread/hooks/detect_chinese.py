@@ -5,7 +5,10 @@ A prompt counts as Chinese when it has at least MIN_HANZI hanzi, no Japanese
 kana, and hanzi make up at least HANZI_RATIO of the hanzi plus Hangul
 characters. Latin text (code, identifiers) is ignored on purpose.
 
+Does nothing while proofreading is turned off with the toggle skill.
+
 Env:
+  CHINESE_PROOFREAD_ENABLED      set to 0 to keep proofreading off
   CHINESE_PROOFREAD_LANG         language for explanations (default: Korean)
   CHINESE_PROOFREAD_MIN_HANZI    minimum hanzi (default: 4)
   CHINESE_PROOFREAD_HANZI_RATIO  minimum hanzi / (hanzi + Hangul) (default: 0.5)
@@ -15,12 +18,28 @@ import json
 import os
 import sys
 
+# Keep in sync with STATE_PATH in scripts/toggle.py.
+STATE_PATH = os.path.expanduser("~/.claude/chinese-proofread/state.json")
+
 
 def count(text, *ranges):
     return sum(1 for ch in text if any(lo <= ord(ch) <= hi for lo, hi in ranges))
 
 
+def enabled():
+    if os.environ.get("CHINESE_PROOFREAD_ENABLED") == "0":
+        return False
+    try:
+        with open(STATE_PATH, encoding="utf-8") as f:
+            return json.load(f).get("enabled") is not False
+    except (OSError, ValueError, AttributeError):
+        return True
+
+
 def main():
+    if not enabled():
+        return
+
     try:
         prompt = json.load(sys.stdin).get("prompt", "")
     except (ValueError, AttributeError):

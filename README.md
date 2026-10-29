@@ -40,12 +40,44 @@ Claude Code에서 다음 명령을 실행합니다.
 
 훅 스크립트를 실행하려면 `python3`가 설치되어 있어야 합니다.
 
+## 켜고 끄기
+
+중국어 학습과 관계없이 중국어 자료를 다루는 동안에는 교정 기능을 잠시 끌 수 있습니다. 설치 직후에는 기능이 켜져 있습니다.
+
+```
+/chinese-proofread:toggle off      교정 기능을 끕니다.
+/chinese-proofread:toggle on       교정 기능을 다시 켭니다.
+/chinese-proofread:toggle status   현재 상태를 확인합니다.
+/chinese-proofread:toggle          현재 상태를 반대로 바꿉니다.
+```
+
+- 변경한 상태는 다음 입력부터 바로 반영되며, Claude Code를 다시 시작할 필요가 없습니다.
+- 상태는 `~/.claude/chinese-proofread/state.json`에 저장되므로, 모든 프로젝트와 세션에 함께 적용되고 Claude Code를 다시 시작해도 유지됩니다.
+- 이 명령은 사용자가 직접 입력할 때만 실행됩니다. Claude가 스스로 판단하여 기능을 끄거나 켜지는 않습니다.
+
+### 특정 프로젝트에서 항상 끄기
+
+중국어 문서를 다루는 저장소처럼 특정 프로젝트에서는 교정 기능을 항상 끄고 싶다면, 그 프로젝트의 `.claude/settings.json`에 다음 내용을 추가합니다.
+
+```json
+{
+  "env": {
+    "CHINESE_PROOFREAD_ENABLED": "0"
+  }
+}
+```
+
+- 이 환경 변수를 설정하면 `/chinese-proofread:toggle on`으로 켜 둔 상태와 관계없이 기능이 꺼집니다. `status`를 실행하면 환경 변수 때문에 꺼져 있다는 사실도 함께 알려 줍니다.
+- 환경 변수를 추가하거나 바꾼 뒤에는 Claude Code를 다시 시작해야 반영됩니다.
+- 모든 프로젝트에서 항상 끄려면 같은 내용을 `~/.claude/settings.json`에 추가합니다. 다만 잠시 끄는 용도라면 환경 변수보다 `/chinese-proofread:toggle off`가 더 편리합니다.
+
 ## 설정
 
 환경 변수로 동작을 조정할 수 있습니다.
 
 | 환경 변수 | 기본값 | 설명 |
 |---|---|---|
+| `CHINESE_PROOFREAD_ENABLED` | (없음) | `0`으로 설정하면 `toggle` 명령으로 저장한 상태와 관계없이 교정 기능을 끕니다. |
 | `CHINESE_PROOFREAD_LANG` | `Korean` | 교정 설명에 사용할 언어입니다. |
 | `CHINESE_PROOFREAD_MIN_HANZI` | `4` | 중국어로 판별하는 데 필요한 최소 한자 수입니다. |
 | `CHINESE_PROOFREAD_HANZI_RATIO` | `0.5` | 한자와 한글을 합한 글자 수에서 한자가 차지해야 하는 최소 비율입니다. |
@@ -68,7 +100,9 @@ plugins/chinese-proofread/
   .claude-plugin/plugin.json               플러그인 정의
   hooks/hooks.json                         UserPromptSubmit 훅 등록
   hooks/detect_chinese.py                  중국어 판별 스크립트
+  scripts/toggle.py                        교정 기능의 상태를 바꾸는 스크립트
   skills/proofread/SKILL.md                교정 절차와 출력 형식
+  skills/toggle/SKILL.md                   교정 기능을 켜고 끄는 명령
 ```
 
 ## 한계

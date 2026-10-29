@@ -4,10 +4,25 @@
 
 ## 1. 켜고 끄는 기능 추가하기
 
+> 완료했습니다. `toggle` 스킬과 `scripts/toggle.py`를 추가하고, `detect_chinese.py`가 상태 파일과 `CHINESE_PROOFREAD_ENABLED`를 확인하도록 수정했습니다. README에 사용법을 정리했고, 결정 내용은 `docs/design-decisions.md`의 9번 항목에 기록했습니다.
+
 - `/chinese-proofread:toggle` 스킬을 추가합니다. 이 스킬은 상태 파일(예: `~/.claude/chinese-proofread/state.json`)에 `enabled` 값을 기록합니다.
-- `detect_chinese.py`는 판별을 시작하기 전에 상태 파일을 읽고, 기능이 꺼져 있으면 아무것도 출력하지 않고 종료합니다.
+- 스킬은 `on`, `off`, `status` 인자를 받습니다. 인자를 생략하면 현재 상태를 반전합니다. 인자 없이 반전만 하면 사용자가 현재 상태를 모르는 채로 명령을 실행하게 되므로, 상태를 직접 지정하는 인자도 함께 제공합니다.
+  - `status`는 상태 파일의 값과 함께 `CHINESE_PROOFREAD_ENABLED=0` 설정 여부도 알려 줍니다. 그렇지 않으면 사용자가 `on`을 실행했는데도 교정이 동작하지 않는 이유를 알 수 없습니다.
+- `detect_chinese.py`는 판별을 시작하기 전에 상태 파일을 읽고, 기능이 꺼져 있으면 아무것도 출력하지 않고 종료합니다. 상태 파일이 없거나 손상되었으면 켜진 것으로 간주하여, 설치 직후에도 바로 동작하게 합니다.
 - 환경 변수를 바꾸면 Claude Code를 다시 시작해야 반영되므로, 환경 변수는 기본 수단으로 쓰지 않습니다. 대신 `CHINESE_PROOFREAD_ENABLED=0`을 설정하면 상태 파일과 관계없이 항상 꺼지도록 합니다.
-- 결정할 사항: 상태를 전역으로 하나만 둘지, 프로젝트마다 따로 둘지 정해야 합니다.
+- 상태는 전역으로 하나만 둡니다. 이 기능을 켜고 끄는 기준은 대부분 사용자가 중국어를 학습하는 중인지 여부이기 때문입니다. 특정 프로젝트에서만 끄고 싶다면 그 프로젝트의 `.claude/settings.json`에서 `CHINESE_PROOFREAD_ENABLED=0`을 설정합니다.
+
+### 스킬 구현 방식
+
+- Claude가 Bash나 Write 도구로 상태 파일을 쓰면 권한 확인이 뜰 수 있고 토큰도 소비합니다. 따라서 `SKILL.md` 본문에 ``!`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/toggle.py $ARGUMENTS` ``를 넣어, 스킬을 불러올 때 스크립트가 실행되고 그 출력만 Claude에게 전달되도록 합니다.
+- 프런트매터에는 다음 값을 지정합니다.
+  - `disable-model-invocation: true`: Claude가 스스로 판단하여 기능을 끄는 일을 막습니다.
+  - `allowed-tools: Bash(python3:*)`: 이 값이 없으면 `!` 명령이 실행되지 않습니다.
+  - `argument-hint: "[on|off|status]"`
+- 스킬 본문의 `${CLAUDE_PLUGIN_ROOT}`는 문자열로 치환될 뿐이고, 스크립트에는 환경 변수로 전달되지 않습니다. 따라서 `toggle.py`가 플러그인 내부 경로를 참조해야 한다면 `__file__`을 기준으로 경로를 구합니다.
+- toggle 명령에는 한자가 없으므로, `UserPromptSubmit` 훅이 `/chinese-proofread:toggle off`라는 입력을 받더라도 `detect_chinese.py`는 반응하지 않습니다.
+- 2026-10-29에 Claude Code 2.1.312와 `default` 권한 모드에서 임시 플러그인으로 위 동작을 확인했습니다. 도구 호출은 발생하지 않았고, `${CLAUDE_SKILL_DIR}` 기준 경로와 `$ARGUMENTS` 전달도 정상적으로 동작했습니다. 다만 대화형 세션에서 `allowed-tools`를 빠뜨렸을 때 권한 확인 창이 뜨는지는 확인하지 않았습니다.
 
 ## 2. 학습 이력을 남기는 방법 구상하기
 
