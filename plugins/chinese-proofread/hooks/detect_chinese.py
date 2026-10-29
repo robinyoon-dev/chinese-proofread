@@ -43,20 +43,7 @@ def enabled():
         return True
 
 
-def main():
-    if not enabled():
-        return
-
-    try:
-        prompt = json.load(sys.stdin).get("prompt", "")
-    except (ValueError, AttributeError):
-        return
-
-    min_hanzi = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI", "4"))
-    min_hanzi_mixed = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI_MIXED", "1"))
-    hanzi_ratio = float(os.environ.get("CHINESE_PROOFREAD_HANZI_RATIO", "0.5"))
-    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
-
+def is_chinese(prompt, min_hanzi=4, min_hanzi_mixed=1, hanzi_ratio=0.5):
     hanzi = count(prompt, (0x4E00, 0x9FFF), (0x3400, 0x4DBF))
     kana = count(prompt, (0x3040, 0x30FF))
     hangul = count(prompt, (0xAC00, 0xD7A3))
@@ -71,6 +58,25 @@ def main():
         or kana > 0
         or hanzi / (hanzi + hangul) < hanzi_ratio
     ):
+        return False
+    return True
+
+
+def main():
+    if not enabled():
+        return
+
+    try:
+        prompt = json.load(sys.stdin).get("prompt", "")
+    except (ValueError, AttributeError):
+        return
+
+    min_hanzi = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI", "4"))
+    min_hanzi_mixed = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI_MIXED", "1"))
+    hanzi_ratio = float(os.environ.get("CHINESE_PROOFREAD_HANZI_RATIO", "0.5"))
+    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
+
+    if not is_chinese(prompt, min_hanzi, min_hanzi_mixed, hanzi_ratio):
         return
 
     context = (
