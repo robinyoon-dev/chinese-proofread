@@ -98,6 +98,8 @@ Claude Code에서 다음 명령을 실행합니다.
 | `CHINESE_PROOFREAD_MIN_HANZI_MIXED` | `1` | 영문자가 섞여 있고 한글이 없는 입력에 적용하는 최소 한자 수입니다. `CHINESE_PROOFREAD_MIN_HANZI`보다 크게 설정하면 `CHINESE_PROOFREAD_MIN_HANZI` 값을 씁니다. |
 | `CHINESE_PROOFREAD_HANZI_RATIO` | `0.5` | 한자와 한글을 합한 글자 수에서 한자가 차지해야 하는 최소 비율입니다. |
 
+숫자를 받는 설정에 숫자가 아닌 값을 넣으면 그 설정은 기본값으로 동작합니다.
+
 예를 들어 설명을 영어로 받으려면 `~/.claude/settings.json`에 다음 내용을 추가합니다.
 
 ```json

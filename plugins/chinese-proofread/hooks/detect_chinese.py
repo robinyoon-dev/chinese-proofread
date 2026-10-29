@@ -43,6 +43,14 @@ def enabled():
         return True
 
 
+def env_number(name, default, convert):
+    # An invalid value falls back to the default instead of failing the hook.
+    try:
+        return convert(os.environ[name])
+    except (KeyError, ValueError):
+        return default
+
+
 def is_chinese(prompt, min_hanzi=4, min_hanzi_mixed=1, hanzi_ratio=0.5):
     hanzi = count(prompt, (0x4E00, 0x9FFF), (0x3400, 0x4DBF))
     kana = count(prompt, (0x3040, 0x30FF))
@@ -70,10 +78,12 @@ def main():
         prompt = json.load(sys.stdin).get("prompt", "")
     except (ValueError, AttributeError):
         return
+    if not isinstance(prompt, str):
+        return
 
-    min_hanzi = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI", "4"))
-    min_hanzi_mixed = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI_MIXED", "1"))
-    hanzi_ratio = float(os.environ.get("CHINESE_PROOFREAD_HANZI_RATIO", "0.5"))
+    min_hanzi = env_number("CHINESE_PROOFREAD_MIN_HANZI", 4, int)
+    min_hanzi_mixed = env_number("CHINESE_PROOFREAD_MIN_HANZI_MIXED", 1, int)
+    hanzi_ratio = env_number("CHINESE_PROOFREAD_HANZI_RATIO", 0.5, float)
     lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
 
     if not is_chinese(prompt, min_hanzi, min_hanzi_mixed, hanzi_ratio):

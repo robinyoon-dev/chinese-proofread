@@ -115,9 +115,26 @@ class HookTest(unittest.TestCase):
         self.assertEqual(self.run_prompt("이 함수를 리팩터링해 줘"), "")
 
     def test_invalid_input(self):
-        for stdin in ["", "not json", "{}", "[]", '"text"']:
+        for stdin in [
+            "", "not json", "{}", "[]", '"text"', '{"prompt": null}', '{"prompt": 123}',
+        ]:
             with self.subTest(stdin=stdin):
                 self.assertEqual(self.run_hook(stdin), "")
+
+    def test_invalid_number_settings_fall_back_to_defaults(self):
+        for name in [
+            "CHINESE_PROOFREAD_MIN_HANZI",
+            "CHINESE_PROOFREAD_MIN_HANZI_MIXED",
+            "CHINESE_PROOFREAD_HANZI_RATIO",
+        ]:
+            for value in ["abc", ""]:
+                with self.subTest(name=name, value=value):
+                    self.assertNotEqual(
+                        self.run_prompt("帮我重构一下这个函数", **{name: value}), ""
+                    )
+                    self.assertEqual(
+                        self.run_prompt("이 함수를 리팩터링해 줘", **{name: value}), ""
+                    )
 
     def test_zero_min_hanzi(self):
         for prompt in ["", "hello"]:
