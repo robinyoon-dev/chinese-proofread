@@ -47,7 +47,8 @@ claude plugin eval ./plugins/chinese-proofread --model sonnet --ablation none --
   Warning: ignoring experimental.evals "../../evals/quality" in .../plugin.json — it must stay inside the plugin root (no ..); using evals/ (fix the manifest or pass --eval-dir)
   ```
 
-- 따라서 평가 케이스를 플러그인 폴더(`plugins/chinese-proofread/evals/`) 안에 두면, 6-1의 테스트 파일과 마찬가지로 사용자가 플러그인을 설치할 때 평가 파일까지 함께 받게 됩니다.
+- 따라서 평가 케이스를 플러그인 폴더(`plugins/chinese-proofread/evals/`) 안에 두면, 사용자가 플러그인을 설치할 때 평가 파일도 플러그인 캐시(`~/.claude/plugins/cache/`)에 함께 설치됩니다. 플러그인을 설치하면 `marketplace.json`의 `source`가 가리키는 폴더만 플러그인 캐시에 복사되기 때문입니다. 이 동작은 `source`가 `"./"`인 다른 플러그인의 캐시에 저장소 전체가 복사되어 있는 것을 보고 확인했습니다.
+- 저장소 루트의 `evals/`와 `tests/`는 플러그인 캐시에 설치되지 않습니다. 다만 사용자가 마켓플레이스를 추가하면 마켓플레이스 저장소 전체가 `~/.claude/plugins/marketplaces/`에 복제되므로, 이 복제본에는 루트의 평가 파일도 들어 있습니다. 이 복제본은 마켓플레이스 목록을 읽는 데 쓰이고 플러그인으로 불러오지 않으므로, 평가 파일이 실행되지는 않습니다.
 
 ### 훅 실행 여부
 
@@ -110,7 +111,7 @@ claude plugin eval ./plugins/chinese-proofread --model sonnet --ablation none --
 
 ## 다음 단계에 반영할 내용
 
-- 평가 케이스는 저장소 루트의 `evals/quality/`에 둡니다. 실행할 때는 플러그인과 평가 케이스를 임시 폴더에 함께 복사한 뒤 eval을 실행하는 스크립트를 사용합니다. 이렇게 하면 사용자가 플러그인을 설치할 때 평가 파일을 받지 않습니다.
+- 평가 케이스는 저장소 루트의 `evals/quality/`에 둡니다. 실행할 때는 플러그인과 평가 케이스를 임시 폴더에 함께 복사한 뒤 eval을 실행하는 스크립트를 사용합니다. 이렇게 하면 평가 파일이 플러그인 캐시에 설치되지 않습니다.
 - 교정 블록의 형식은 `last_message`와 `trace`를 대상으로 하는 채점자를 함께 두어 검사합니다. 두 채점자를 함께 두면 교정 블록을 생략한 경우와 중간 텍스트에만 출력한 경우를 구분할 수 있습니다.
 - 훅의 실행 여부는 이번 시범 실행에서 확인했으므로, 평가 세트에는 표시 파일을 쓰는 훅 수정과 `hook-fired` 채점자를 넣지 않습니다. 훅의 판별 정확도는 6-2에서 이미 측정했습니다.
 - Bash를 허용할 수 없으므로, 1단계의 작업 계속 수행률은 `Read`와 `Edit`만으로 끝나는 작업으로 측정합니다. 명령을 실행해야 하는 작업은 Docker 설정 문제를 해결하거나 다른 환경에서 실행할 수 있을 때 추가합니다.
