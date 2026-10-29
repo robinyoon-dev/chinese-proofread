@@ -119,7 +119,19 @@ plugins/chinese-proofread/
   scripts/toggle.py                        교정 기능의 상태를 바꾸는 스크립트
   skills/proofread/SKILL.md                교정 절차와 출력 형식
   skills/toggle/SKILL.md                   교정 기능을 켜고 끄는 명령
+tests/test_detect_chinese.py               중국어 판별 스크립트의 테스트
+.github/workflows/test.yml                 테스트를 실행하는 GitHub Actions 워크플로
 ```
+
+## 테스트
+
+판별 스크립트를 수정했다면 커밋하기 전에 저장소 루트에서 다음 명령을 실행합니다. 외부 패키지는 필요하지 않습니다.
+
+```
+python3 -m unittest discover -s tests
+```
+
+`main` 브랜치에 push하거나 pull request를 열면 GitHub Actions가 Python 3.9와 3.14에서 같은 테스트를 실행합니다.
 
 ## 한계
 

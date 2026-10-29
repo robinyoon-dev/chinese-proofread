@@ -1,0 +1,143 @@
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+
+HOOKS_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..", "plugins", "chinese-proofread", "hooks",
+)
+SCRIPT = os.path.join(HOOKS_DIR, "detect_chinese.py")
+
+sys.path.insert(0, HOOKS_DIR)
+from detect_chinese import is_chinese  # noqa: E402
+
+
+class IsChineseTest(unittest.TestCase):
+    def test_chinese(self):
+        for prompt in [
+            "帮我重构一下这个函数，让它运行得更快",
+            "把 `parse_config()` 改成异步函数",
+            "幫我把這個函數改成非同步",
+        ]:
+            with self.subTest(prompt=prompt):
+                self.assertTrue(is_chinese(prompt))
+
+    def test_not_chinese(self):
+        for prompt in [
+            "",
+            "refactor this function",
+            "이 함수를 리팩터링해 줘",
+            "이 函数는 返回值를 바꿔서 처리해야 합니다",
+            "この関数を非同期に変更してください",
+            "好的",
+            "谢谢你",
+        ]:
+            with self.subTest(prompt=prompt):
+                self.assertFalse(is_chinese(prompt))
+
+    def test_min_hanzi_boundary(self):
+        self.assertTrue(is_chinese("我知道了"))
+        self.assertFalse(is_chinese("我知道了", min_hanzi=5))
+
+    def test_latin_without_hangul_needs_fewer_hanzi(self):
+        self.assertTrue(is_chinese("跑local server."))
+        self.assertTrue(is_chinese("帮我fix一下这个bug"))
+
+    def test_latin_with_hangul_keeps_min_hanzi(self):
+        # 3 hanzi and 2 Hangul pass the ratio but not MIN_HANZI.
+        self.assertFalse(is_chinese("帮我跑local 서버"))
+
+    def test_min_hanzi_mixed_above_min_hanzi(self):
+        # README: a larger MIN_HANZI_MIXED falls back to MIN_HANZI.
+        self.assertFalse(is_chinese("跑local server.", min_hanzi_mixed=5))
+        self.assertTrue(is_chinese("帮我跑一下local server", min_hanzi_mixed=10))
+
+    def test_zero_min_hanzi(self):
+        for prompt in ["", "hello", "안녕하세요"]:
+            with self.subTest(prompt=prompt):
+                self.assertFalse(is_chinese(prompt, min_hanzi=0, min_hanzi_mixed=0))
+        self.assertTrue(is_chinese("好", min_hanzi=0))
+
+    @unittest.expectedFailure
+    def test_known_limit_japanese_without_kana(self):
+        # Known limit: Japanese written only in kanji passes as Chinese.
+        self.assertFalse(is_chinese("本日休業"))
+
+
+class HookTest(unittest.TestCase):
+    def setUp(self):
+        home = tempfile.TemporaryDirectory()
+        self.addCleanup(home.cleanup)
+        self.home = home.name
+        self.env = {
+            k: v for k, v in os.environ.items()
+            if not k.startswith("CHINESE_PROOFREAD_")
+        }
+        # Keep the real ~/.claude state file out of the tests.
+        self.env["HOME"] = self.home
+
+    def run_hook(self, stdin, **env):
+        result = subprocess.run(
+            [sys.executable, SCRIPT],
+            input=stdin,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=dict(self.env, **env),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        return result.stdout
+
+    def run_prompt(self, prompt, **env):
+        return self.run_hook(json.dumps({"prompt": prompt}), **env)
+
+    def write_state(self, text):
+        path = os.path.join(self.home, ".claude", "chinese-proofread")
+        os.makedirs(path)
+        with open(os.path.join(path, "state.json"), "w", encoding="utf-8") as f:
+            f.write(text)
+
+    def test_chinese_prompt(self):
+        output = json.loads(self.run_prompt("帮我重构一下这个函数"))["hookSpecificOutput"]
+        self.assertEqual(output["hookEventName"], "UserPromptSubmit")
+        self.assertIn("chinese-proofread:proofread", output["additionalContext"])
+        self.assertIn("in Korean", output["additionalContext"])
+
+    def test_lang(self):
+        output = self.run_prompt("帮我重构一下这个函数", CHINESE_PROOFREAD_LANG="English")
+        self.assertIn("in English", output)
+
+    def test_not_chinese_prompt(self):
+        self.assertEqual(self.run_prompt("이 함수를 리팩터링해 줘"), "")
+
+    def test_invalid_input(self):
+        for stdin in ["", "not json", "{}", "[]", '"text"']:
+            with self.subTest(stdin=stdin):
+                self.assertEqual(self.run_hook(stdin), "")
+
+    def test_zero_min_hanzi(self):
+        for prompt in ["", "hello"]:
+            with self.subTest(prompt=prompt):
+                self.assertEqual(
+                    self.run_prompt(prompt, CHINESE_PROOFREAD_MIN_HANZI="0"), ""
+                )
+
+    def test_disabled_by_env(self):
+        output = self.run_prompt("帮我重构一下这个函数", CHINESE_PROOFREAD_ENABLED="0")
+        self.assertEqual(output, "")
+
+    def test_disabled_by_state_file(self):
+        self.write_state('{"enabled": false}')
+        self.assertEqual(self.run_prompt("帮我重构一下这个函数"), "")
+
+    def test_broken_state_file_counts_as_enabled(self):
+        self.write_state("not json")
+        self.assertNotEqual(self.run_prompt("帮我重构一下这个函数"), "")
+
+
+if __name__ == "__main__":
+    unittest.main()
