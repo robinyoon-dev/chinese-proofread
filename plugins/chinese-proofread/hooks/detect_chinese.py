@@ -78,7 +78,9 @@ def main():
         "apply the chinese-proofread:proofread skill: proofread the user's own "
         "Chinese sentences, including any English or Korean words they used "
         f"in place of Chinese words, and explain the corrections in {lang}, "
-        "then carry out the request based on the corrected meaning."
+        "then carry out the request based on the corrected meaning. "
+        "If the user wrote no Chinese sentences of their own, skip "
+        "proofreading without mentioning it."
     )
     json.dump(
         {
