@@ -73,6 +73,9 @@ def regex(name, pattern, match="contains", flags="", target=None):
 BLOCK_FIRST = regex("format-block-first", r"^\s*📝 中文校对\s*\n")
 OK_FIRST = regex("format-ok-first", r"^\s*📝 中文校对: ✅ 자연스럽습니다\.")
 NO_ORIGINAL = regex("overfix-no-original", r"^原文:", "not_contains", "m")
+# A 修正 line that repeats its 原文 line is a ✅ written as a correction.
+SAME_AS_ORIGINAL = regex("overfix-not-same", r"^原文: ?(.+?)\s*\n修正: ?\1\s*$",
+                         "not_contains", "m")
 PINYIN_NOT_NUMERIC = regex(
     "pinyin-not-numeric", r"\([a-zü]+[1-5](?: [a-zü]+[1-5])*\)", "not_contains")
 DIAG = [
@@ -91,6 +94,7 @@ KIND_GRADERS = {
         regex("format-original", r"^原文: ?\S", flags="m"),
         regex("format-fixed", r"^修正: ?\S", flags="m"),
         regex("format-explain", r"^설명:", flags="m"),
+        SAME_AS_ORIGINAL,
         # -{3}, not ---: eval reads a literal --- as the end of the frontmatter.
         regex("format-end", r"^-{3}\s*$", flags="m"),
         regex("pinyin-present", f"[{TONE_MARKS}]"),
@@ -105,7 +109,8 @@ KIND_GRADERS = {
               "not_contains"),
     ] + DIAG,
     "note": [OK_FIRST, NO_ORIGINAL, PINYIN_NOT_NUMERIC] + DIAG,
-    "ask": [regex("format-block-first", r"^\s*📝 中文校对")] + DIAG,
+    "ask": [regex("format-block-first", r"^\s*📝 中文校对"),
+            SAME_AS_ORIGINAL] + DIAG,
     "none": [
         regex("skip-no-block", r"📝|中文校对", "not_contains"),
         regex("skip-no-mention", r"교정|校对|proofread", "not_contains", "i"),

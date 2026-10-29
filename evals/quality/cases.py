@@ -222,7 +222,9 @@ CASES = [
         # Not 老多算1: 老多 also reads as "a lot", so correcting it is fair.
         "prompt": "这个函数咋老是多算1啊？帮我瞅瞅呗。utils.py里的average。",
         "files": {"utils.py": UTILS},
-        "graders": [FINDS_PLUS_ONE, keeps_in_fix("呗", "tone-keep")],
+        "graders": [FINDS_PLUS_ONE, keeps_in_fix("呗", "tone-keep"),
+                    keeps_in_fix("咋", "tone-keep-za"),
+                    keeps_in_fix("瞅", "tone-keep-chou")],
     },
     {
         "name": "fix-colloquial",
