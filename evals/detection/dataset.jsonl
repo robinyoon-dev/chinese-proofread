@@ -80,21 +80,19 @@
 {"id": "ko_pure-09", "prompt": "이 에러 메시지가 무슨 뜻이야?", "usage": "none", "category": "ko_pure", "split": "dev", "source": "claude", "note": ""}
 {"id": "ko_pure-10", "prompt": "DB 연결이 자꾸 타임아웃 나", "usage": "none", "category": "ko_pure", "split": "test", "source": "claude", "note": ""}
 {"id": "ko_with_hanzi-01", "prompt": "函数를 하나 더 만들어 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": ""}
-{"id": "ko_with_hanzi-02", "prompt": "이 部分은 나중에 고칠게", "usage": "none", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "애매함: 한국어 한자어 部分(부분)과 중국어 部分의 모양이 같음"}
-{"id": "ko_with_hanzi-03", "prompt": "中國語 판별 로직을 점검해 줘", "usage": "none", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "한국어 한자어: 중국어로는 中文이나 汉语라고 씀"}
-{"id": "ko_with_hanzi-04", "prompt": "변수 이름을 漢字로 쓰면 안 되나?", "usage": "none", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "한국어 한자어"}
-{"id": "ko_with_hanzi-05", "prompt": "데이터 處理 속도가 느려", "usage": "none", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "한국어 한자어(번체 모양)"}
 {"id": "ko_with_hanzi-06", "prompt": "테스트에 中, 文, 字 세 글자를 넣어 줘", "usage": "quoted", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "테스트 데이터로 인용"}
 {"id": "ko_with_hanzi-07", "prompt": "한자 범위에 㐀(U+3400)도 포함되는지 확인해 줘", "usage": "quoted", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "글자 자체를 언급"}
 {"id": "ko_with_hanzi-08", "prompt": "這個 같은 번체자가 판별되는지 테스트해 줘", "usage": "quoted", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "글자 자체를 언급"}
 {"id": "ko_with_hanzi-09", "prompt": "이 문서 제목을 「設計 決定」으로 바꿔 줘", "usage": "quoted", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "문서 제목으로 인용"}
-{"id": "ko_with_hanzi-10", "prompt": "社內 위키에 정리해 둔 내용 참고해서 작성해 줘", "usage": "none", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "한국어 한자어"}
 {"id": "ko_with_hanzi-11", "prompt": "이 登录 函数를 두 개로 나눠 줘", "usage": "word", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "쌍 K1: 한국어 문장에 중국어 단어가 들어감"}
 {"id": "ko_with_hanzi-12", "prompt": "这个 按钮이 왜 안 눌리는지 봐 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 K2: 한국어 문장에 중국어 단어가 들어감"}
 {"id": "ko_with_hanzi-13", "prompt": "设置 画面에 暗黑 模式 추가해 줘", "usage": "word", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": "쌍 K3: 한국어 문장에 중국어 단어가 들어감"}
 {"id": "ko_with_hanzi-14", "prompt": "数据库 连接 超时를 30초로 바꿔 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 K4: 한국어 문장에 중국어 단어가 들어감"}
 {"id": "ko_with_hanzi-15", "prompt": "运行 전에 缓存부터 지워 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 K5: 한국어 문장에 중국어 단어가 들어감"}
-{"id": "ko_with_hanzi-16", "prompt": "이번 主要 修正 事項은 判別 規則 改善이야", "usage": "none", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": "한국어 한자어(번체 모양), 한자가 한글보다 많음"}
+{"id": "ko_with_hanzi-16", "prompt": "이 函数 返回值가 이상해", "usage": "word", "category": "ko_with_hanzi", "split": "test", "source": "claude", "note": ""}
+{"id": "ko_with_hanzi-17", "prompt": "登录 页面에서 错误 메시지가 안 보여", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_with_hanzi-18", "prompt": "测试 다 돌려 보고 失败한 거 알려 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": ""}
+{"id": "ko_with_hanzi-19", "prompt": "이 变量 이름 좀 바꿔 줘", "usage": "word", "category": "ko_with_hanzi", "split": "dev", "source": "claude", "note": ""}
 {"id": "ko_with_pasted_chinese-01", "prompt": "이 에러가 무슨 뜻이야?\n错误：找不到模块 'requests'", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "dev", "source": "claude", "note": ""}
 {"id": "ko_with_pasted_chinese-02", "prompt": "중국 서버 로그인데 해석해 줘:\n[错误] 数据库连接失败，请检查配置", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "test", "source": "claude", "note": ""}
 {"id": "ko_with_pasted_chinese-03", "prompt": "사용자가 이런 문의를 남겼어: \"我的账号无法登录，一直显示密码错误\" 답변 초안 써 줘", "usage": "quoted", "category": "ko_with_pasted_chinese", "split": "test", "source": "claude", "note": ""}
@@ -115,6 +113,8 @@
 {"id": "en_with_hanzi-10", "prompt": "commit first, then 推送 to origin", "usage": "word", "category": "en_with_hanzi", "split": "test", "source": "claude", "note": "쌍 E4: 영어 문장에 중국어 단어가 들어감"}
 {"id": "en_with_hanzi-11", "prompt": "check for a 内存 leak", "usage": "word", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "쌍 E5: 영어 문장에 중국어 단어가 들어감"}
 {"id": "en_with_hanzi-12", "prompt": "set the default locale to 简体中文", "usage": "quoted", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": "영어 요청에 한자 4자, 로캘 이름으로 인용"}
+{"id": "en_with_hanzi-13", "prompt": "the 按钮 on the settings page does nothing", "usage": "word", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": ""}
+{"id": "en_with_hanzi-14", "prompt": "please add a 注释 to this function", "usage": "word", "category": "en_with_hanzi", "split": "dev", "source": "claude", "note": ""}
 {"id": "en_or_code-01", "prompt": "run the tests and fix any failures", "usage": "none", "category": "en_or_code", "split": "dev", "source": "claude", "note": ""}
 {"id": "en_or_code-02", "prompt": "git push origin main", "usage": "none", "category": "en_or_code", "split": "dev", "source": "claude", "note": ""}
 {"id": "en_or_code-03", "prompt": "Refactor this function to use async/await", "usage": "none", "category": "en_or_code", "split": "dev", "source": "claude", "note": ""}
