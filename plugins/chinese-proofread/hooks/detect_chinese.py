@@ -5,12 +5,19 @@ A prompt counts as Chinese when it has at least MIN_HANZI hanzi, no Japanese
 kana, and hanzi make up at least HANZI_RATIO of the hanzi plus Hangul
 characters. Latin text (code, identifiers) is ignored on purpose.
 
+A prompt with Latin letters and no Hangul needs only MIN_HANZI_MIXED hanzi,
+so short prompts like "跑local server" that borrow English words for
+unknown Chinese words are still proofread.
+
 Does nothing while proofreading is turned off with the toggle skill.
 
 Env:
   CHINESE_PROOFREAD_ENABLED      set to 0 to keep proofreading off
   CHINESE_PROOFREAD_LANG         language for explanations (default: Korean)
   CHINESE_PROOFREAD_MIN_HANZI    minimum hanzi (default: 4)
+  CHINESE_PROOFREAD_MIN_HANZI_MIXED
+                                 minimum hanzi with Latin letters and no
+                                 Hangul (default: 1)
   CHINESE_PROOFREAD_HANZI_RATIO  minimum hanzi / (hanzi + Hangul) (default: 0.5)
 """
 
@@ -46,12 +53,17 @@ def main():
         return
 
     min_hanzi = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI", "4"))
+    min_hanzi_mixed = int(os.environ.get("CHINESE_PROOFREAD_MIN_HANZI_MIXED", "1"))
     hanzi_ratio = float(os.environ.get("CHINESE_PROOFREAD_HANZI_RATIO", "0.5"))
     lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
 
     hanzi = count(prompt, (0x4E00, 0x9FFF), (0x3400, 0x4DBF))
     kana = count(prompt, (0x3040, 0x30FF))
     hangul = count(prompt, (0xAC00, 0xD7A3))
+    latin = count(prompt, (0x41, 0x5A), (0x61, 0x7A))
+
+    if latin > 0 and hangul == 0:
+        min_hanzi = min(min_hanzi, min_hanzi_mixed)
 
     if (
         hanzi == 0
@@ -64,8 +76,9 @@ def main():
     context = (
         "The user wrote this prompt in Chinese. Before doing anything else, "
         "apply the chinese-proofread:proofread skill: proofread the user's own "
-        f"Chinese sentences and explain the corrections in {lang}, then carry "
-        "out the request based on the corrected meaning."
+        "Chinese sentences, including any English or Korean words they used "
+        f"in place of Chinese words, and explain the corrections in {lang}, "
+        "then carry out the request based on the corrected meaning."
     )
     json.dump(
         {
