@@ -216,10 +216,16 @@ def summarize(result_path):
     # the 原文 line, no punctuation note, ...) passes trivially when there is
     # no block, so a run without a block is left out of its count. none cases
     # are the exception: having no block is what they check.
+    #
+    # A grader since removed from cases.py is not counted, so an earlier
+    # result can be summarized again after a grader turns out to be wrong.
     with open(result_path, encoding="utf-8") as f:
         result = json.load(f)
     traces = os.path.join(os.path.dirname(result_path), "traces")
     kinds = {c["name"]: c["kind"] for c in CASES}
+    current = {c["name"]: {g["name"]
+                           for g in KIND_GRADERS[c["kind"]] + c["graders"]}
+               for c in CASES}
 
     columns = {"any": defaultdict(lambda: [0, 0, 0]),
                "final": defaultdict(lambda: [0, 0, 0])}
@@ -240,6 +246,9 @@ def summarize(result_path):
             shown = {"any": reply_texts(trace) if have_trace else None,
                      "final": final_reply(trace) if have_trace else None}
             for grader in run["graders"]:
+                if (case["name"] in current and
+                        grader["name"] not in current[case["name"]]):
+                    continue
                 metric = metric_of(grader["name"])
                 config = configs[grader["name"]]
                 on_reply = (config["type"] == "regex" and

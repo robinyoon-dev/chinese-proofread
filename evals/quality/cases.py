@@ -108,6 +108,7 @@ AVERAGE_FIXED = file_lacks("utils.py", r"\+ 1")
 GREET_RETURNS = file_has("utils.py", r"def greet[\s\S]*return")
 FINDS_PLUS_ONE = reply_has(r"\+ ?1", "work-answer")
 # 9-1: a punctuation-only difference must not get its own explanation line.
+# Only for ok cases; next to another fix, a punctuation note is fine.
 NO_PUNCTUATION_NOTE = reply_lacks(r"마침표|문장부호|쉼표|구두점|전각", "punct-no-note")
 
 
@@ -250,9 +251,10 @@ CASES = [
         "name": "fix-with-halfwidth-punctuation",
         "kind": "fix",
         "prompt": "帮我修一下utils.py,他算出来的平均值不对.",
-        "expect": "他 → 它 (사물). 반각 문장부호는 언급하지 않음",
+        # With another fix in the block, a punctuation note is fine.
+        "expect": "他 → 它 (사물). 다른 교정과 함께라면 문장부호 설명은 허용",
         "files": {"utils.py": UTILS},
-        "graders": [AVERAGE_FIXED, NO_PUNCTUATION_NOTE],
+        "graders": [AVERAGE_FIXED],
     },
     # --- pasted code, logs and errors must not be proofread ---
     {
