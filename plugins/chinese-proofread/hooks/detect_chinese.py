@@ -34,7 +34,7 @@ def main():
     kana = count(prompt, (0x3040, 0x30FF))
     hangul = count(prompt, (0xAC00, 0xD7A3))
 
-    if han < min_han or kana > 0 or han / (han + hangul) < han_ratio:
+    if han == 0 or han < min_han or kana > 0 or han / (han + hangul) < han_ratio:
         return
 
     context = (
