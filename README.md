@@ -1,5 +1,7 @@
 # chinese-proofread
 
+> 이 플러그인은 아직 개발 중이며, 첫 버전을 배포하지 않았습니다. 교정 규칙과 설정 방법이 예고 없이 바뀔 수 있습니다.
+
 Claude Code에 중국어로 요청을 입력하면, Claude가 먼저 그 중국어 문장이 자연스러운지 점검하고 교정한 다음에 요청을 수행하도록 만드는 플러그인입니다.
 
 ## 동작 방식
@@ -52,7 +54,7 @@ Claude Code에 중국어로 요청을 입력하면, Claude가 먼저 그 중국�
 Claude Code에서 다음 명령을 실행합니다.
 
 ```
-/plugin marketplace add <github-owner>/chinese-proofread
+/plugin marketplace add robinyoon-dev/chinese-proofread
 /plugin install chinese-proofread@chinese-proofread
 ```
 
