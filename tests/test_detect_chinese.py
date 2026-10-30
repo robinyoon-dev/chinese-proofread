@@ -30,7 +30,6 @@ class IsChineseTest(unittest.TestCase):
             "",
             "refactor this function",
             "이 함수를 리팩터링해 줘",
-            "이 函数는 返回值를 바꿔서 처리해야 합니다",
             "この関数を非同期に変更してください",
             "好的",
             "谢谢你",
@@ -46,9 +45,24 @@ class IsChineseTest(unittest.TestCase):
         self.assertTrue(is_chinese("跑local server."))
         self.assertTrue(is_chinese("帮我fix一下这个bug"))
 
-    def test_latin_with_hangul_keeps_min_hanzi(self):
-        # 3 hanzi and 2 Hangul pass the ratio but not MIN_HANZI.
-        self.assertFalse(is_chinese("帮我跑local 서버"))
+    def test_words_mixed_into_korean_or_english(self):
+        # 9-5: the skill corrects Chinese words in other languages too, so a
+        # single hanzi is enough once Latin letters or Hangul appear.
+        for prompt in [
+            "设置 画面에 暗黑 模式 추가해 줘",
+            "이 函数는 返回值를 바꿔서 처리해야 합니다",
+            "로그인 按键 좀 키워 줘",
+            "跑로컬 서버",
+            "this API is too 慢",
+        ]:
+            with self.subTest(prompt=prompt):
+                self.assertTrue(is_chinese(prompt))
+
+    def test_hanzi_ratio_skips_korean_with_few_hanzi(self):
+        # For users who write Korean hanja words: CHINESE_PROOFREAD_HANZI_RATIO.
+        self.assertFalse(is_chinese("이 函数는 返回值를 바꿔서 처리해야 합니다",
+                                    hanzi_ratio=0.5))
+        self.assertTrue(is_chinese("帮我把로컬 서버跑起来", hanzi_ratio=0.5))
 
     def test_min_hanzi_mixed_above_min_hanzi(self):
         # README: a larger MIN_HANZI_MIXED falls back to MIN_HANZI.
@@ -113,6 +127,13 @@ class HookTest(unittest.TestCase):
 
     def test_not_chinese_prompt(self):
         self.assertEqual(self.run_prompt("이 함수를 리팩터링해 줘"), "")
+
+    def test_hanzi_ratio_setting(self):
+        prompt = "이 函数는 返回值를 바꿔서 처리해야 합니다"
+        self.assertNotEqual(self.run_prompt(prompt), "")
+        self.assertEqual(
+            self.run_prompt(prompt, CHINESE_PROOFREAD_HANZI_RATIO="0.5"), ""
+        )
 
     def test_invalid_input(self):
         for stdin in [

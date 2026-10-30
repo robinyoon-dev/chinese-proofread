@@ -5,9 +5,11 @@ A prompt counts as Chinese when it has at least MIN_HANZI hanzi, no Japanese
 kana, and hanzi make up at least HANZI_RATIO of the hanzi plus Hangul
 characters. Latin text (code, identifiers) is ignored on purpose.
 
-A prompt with Latin letters and no Hangul needs only MIN_HANZI_MIXED hanzi,
-so short prompts like "跑local server" that borrow English words for
-unknown Chinese words are still proofread.
+A prompt with Latin letters or Hangul needs only MIN_HANZI_MIXED hanzi, so
+short prompts like "跑local server" and Chinese words mixed into Korean or
+English sentences are still proofread. The skill decides whether the hanzi
+were written by the user or quoted. HANZI_RATIO is 0 by default; raising it
+skips Korean sentences with only a few hanzi.
 
 Does nothing while proofreading is turned off with the toggle skill.
 
@@ -16,9 +18,9 @@ Env:
   CHINESE_PROOFREAD_LANG         language for explanations (default: Korean)
   CHINESE_PROOFREAD_MIN_HANZI    minimum hanzi (default: 4)
   CHINESE_PROOFREAD_MIN_HANZI_MIXED
-                                 minimum hanzi with Latin letters and no
-                                 Hangul (default: 1)
-  CHINESE_PROOFREAD_HANZI_RATIO  minimum hanzi / (hanzi + Hangul) (default: 0.5)
+                                 minimum hanzi with Latin letters or Hangul
+                                 (default: 1)
+  CHINESE_PROOFREAD_HANZI_RATIO  minimum hanzi / (hanzi + Hangul) (default: 0)
 """
 
 import json
@@ -51,13 +53,13 @@ def env_number(name, default, convert):
         return default
 
 
-def is_chinese(prompt, min_hanzi=4, min_hanzi_mixed=1, hanzi_ratio=0.5):
+def is_chinese(prompt, min_hanzi=4, min_hanzi_mixed=1, hanzi_ratio=0.0):
     hanzi = count(prompt, (0x4E00, 0x9FFF), (0x3400, 0x4DBF))
     kana = count(prompt, (0x3040, 0x30FF))
     hangul = count(prompt, (0xAC00, 0xD7A3))
     latin = count(prompt, (0x41, 0x5A), (0x61, 0x7A))
 
-    if latin > 0 and hangul == 0:
+    if latin > 0 or hangul > 0:
         min_hanzi = min(min_hanzi, min_hanzi_mixed)
 
     if (
@@ -83,7 +85,7 @@ def main():
 
     min_hanzi = env_number("CHINESE_PROOFREAD_MIN_HANZI", 4, int)
     min_hanzi_mixed = env_number("CHINESE_PROOFREAD_MIN_HANZI_MIXED", 1, int)
-    hanzi_ratio = env_number("CHINESE_PROOFREAD_HANZI_RATIO", 0.5, float)
+    hanzi_ratio = env_number("CHINESE_PROOFREAD_HANZI_RATIO", 0.0, float)
     lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
 
     if not is_chinese(prompt, min_hanzi, min_hanzi_mixed, hanzi_ratio):
@@ -93,10 +95,12 @@ def main():
         "The user wrote this prompt in Chinese. Before doing anything else, "
         "apply the chinese-proofread:proofread skill: proofread the user's own "
         "Chinese sentences, including any English or Korean words they used "
-        f"in place of Chinese words, and explain the corrections in {lang}, "
+        "in place of Chinese words, and the Chinese words they mixed into "
+        "Korean or English sentences (even ones that look like Korean "
+        f"hanja words), and explain the corrections in {lang}, "
         "then carry out the request based on the corrected meaning. "
-        "If the user wrote no Chinese sentences of their own, skip "
-        "proofreading without mentioning it."
+        "If the user wrote no Chinese of their own, skip proofreading "
+        "without mentioning it."
     )
     json.dump(
         {

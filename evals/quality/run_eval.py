@@ -109,6 +109,15 @@ KIND_GRADERS = {
         regex("overfix-no-note", r"✅ 자연스럽습니다\.[^\n]*\n[ \t]*- ",
               "not_contains"),
     ] + DIAG,
+    # 9-5 trial: Chinese words mixed into Korean or English sentences.
+    "word": [
+        BLOCK_FIRST,
+        regex("format-word-line", r"^- \S.*→", flags="m"),
+        regex("format-word-no-original", r"^原文:", "not_contains", "m"),
+        regex("format-end", r"^-{3}\s*$", flags="m"),
+        regex("pinyin-present", f"[{TONE_MARKS}]"),
+        PINYIN_NOT_NUMERIC,
+    ] + DIAG,
     "ask": [regex("format-block-first", r"^\s*📝 中文校对"),
             SAME_AS_ORIGINAL] + DIAG,
     "none": [

@@ -8,6 +8,8 @@ never holds eval files.
 kind decides the format graders every case gets:
   fix   the user's Chinese has an error; expects a 原文 / 修正 block
   ok    natural Chinese; expects only the ✅ line
+  word  Chinese words mixed into Korean or English (9-5 trial); expects a
+        block that lists the corrected words
   ask   the request has two readings; expects a question and no edits
   none  no Chinese sentence of the user's own; expects no block at all
 
@@ -452,16 +454,60 @@ CASES = [
         "graders": [reply_has(r"try again", "work-answer", "i")],
     },
     {
-        # 9-5 would correct 暗黑模式 → 深色模式 and 设置画面 → 设置界面.
-        # Today's SKILL.md skips Chinese words in other languages.
-        "name": "none-word-needs-fix",
-        "kind": "none",
+        # 暗黑模式 is common enough in Chinese apps, so only 画面 is checked.
+        "name": "word-en-setting-screen",
+        "kind": "word",
         "prompt": "what's a good English variable name for the 暗黑模式 toggle in the 设置画面?",
+        "expect": "设置画面 → 设置界面",
         "files": {},
-        "graders": [reply_has(r"dark", "work-answer", "i")],
+        "graders": [reply_has(r"界面", "detect-word"),
+                    reply_has(r"dark", "work-answer", "i")],
     },
     {
-        # 9-5 would print nothing here too: 慢 is already right.
+        "name": "word-ko-exception",
+        "kind": "word",
+        "prompt": "utils.py의 average에 빈 리스트가 들어오면 例外 처리 좀 추가해 줘",
+        "expect": "例外 → 异常 (프로그램의 예외)",
+        "files": {"utils.py": UTILS},
+        "graders": [reply_has(r"异常", "detect-word"),
+                    file_has("utils.py", r"if not numbers|len\(numbers\) ?== ?0|try:")],
+    },
+    {
+        "name": "word-en-quiz",
+        "kind": "word",
+        "prompt": "write a 测验 for average in test_utils.py",
+        "expect": "测验 → 测试 (测验는 시험, 퀴즈)",
+        "files": {"utils.py": UTILS},
+        "graders": [reply_has(r"测试", "detect-word"),
+                    file_has("test_utils.py", r"average")],
+    },
+    {
+        "name": "word-ko-chinese-language",
+        "kind": "word",
+        "prompt": "README의 中國語 설명을 영어로 바꿔 줘",
+        "expect": "中國語 → 中文. README의 중국어 설명은 교정하지 않음",
+        "files": {"README.md": README},
+        "graders": [reply_has(r"中文", "detect-word"),
+                    reply_lacks(r"^- [^\s→]*简单[^\s→]* →", "paste-not-proofread", "m"),
+                    file_has("README.md", r"[Ss]imple|[Uu]tilit|[Hh]elper")],
+    },
+    {
+        "name": "none-word-ko-right",
+        "kind": "none",
+        "prompt": "utils.py의 average 函数에 注释 좀 달아 줘",
+        "files": {"utils.py": UTILS},
+        "graders": [file_has("utils.py", r"\"\"\"|'''|#")],
+    },
+    {
+        "name": "none-ko-pasted-error",
+        "kind": "none",
+        "prompt": "실행하니까 `ValueError: 参数错误`가 나오는데 무슨 뜻이야?",
+        "files": {},
+        "graders": [reply_has(r"인자|인수|매개변수|파라미터|parameter|argument",
+                              "work-answer", "i")],
+    },
+    {
+        # 慢 is already right, so nothing is printed.
         "name": "none-word-already-right",
         "kind": "none",
         "prompt": "this API is too 慢, can you check why in api.py?",
