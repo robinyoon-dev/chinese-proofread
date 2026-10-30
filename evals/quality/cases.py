@@ -7,11 +7,12 @@ never holds eval files.
 
 kind decides the format graders every case gets:
   fix   the user's Chinese has an error; expects a 原文 / 修正 block
-  ok    natural Chinese; expects only the ✅ line
+  ok    natural Chinese, or only correct Chinese words mixed into Korean or
+        English; expects only the ✅ line
   word  Chinese words mixed into Korean or English (9-5 trial); expects a
         block that lists the corrected words
   ask   the request has two readings; expects a question and no edits
-  none  no Chinese sentence of the user's own; expects no block at all
+  none  no Chinese of the user's own; expects no block at all
 
 Grader names start with the metric they count toward (see METRICS in
 run_eval.py). `expect` records the intended correction for the LLM grader
@@ -492,8 +493,8 @@ CASES = [
                     file_has("README.md", r"[Ss]imple|[Uu]tilit|[Hh]elper")],
     },
     {
-        "name": "none-word-ko-right",
-        "kind": "none",
+        "name": "ok-word-ko-right",
+        "kind": "ok",
         "prompt": "utils.py의 average 函数에 注释 좀 달아 줘",
         "files": {"utils.py": UTILS},
         "graders": [file_has("utils.py", r"\"\"\"|'''|#")],
@@ -508,8 +509,8 @@ CASES = [
     },
     {
         # 慢 is already right, so nothing is printed.
-        "name": "none-word-already-right",
-        "kind": "none",
+        "name": "ok-word-already-right",
+        "kind": "ok",
         "prompt": "this API is too 慢, can you check why in api.py?",
         "files": {"api.py": SLOW_API},
         "graders": [reply_has(r"sleep", "work-answer")],
