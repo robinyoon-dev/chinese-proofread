@@ -4,15 +4,13 @@
 
 Claude Code에 중국어로 요청을 입력하면, Claude가 먼저 그 중국어 문장이 자연스러운지 점검하고 교정한 다음에 요청을 수행하도록 만드는 플러그인입니다.
 
+Claude Code로 개발하면서 중국어를 배우는 한국어 사용자를 대상으로 만들었으므로, 교정 설명은 기본적으로 한국어로 출력합니다. 설명에 사용할 언어는 [설정](#설정)에서 바꿀 수 있습니다.
+
 <img src="docs/images/readme-hero.png" width="880" alt="중국어 요청 让这个function跑的更快를 Claude가 먼저 让这个函数跑得更快로 교정하고, function은 函数(hánshù)로, 的는 得로 고친 이유를 설명한 다음 요청을 수행하는 흐름">
 
-## 동작 방식
+## 교정 결과 예시
 
-1. `UserPromptSubmit` 훅이 입력된 프롬프트를 검사하여 중국어인지 판별합니다.
-2. 중국어라고 판별되면, 훅은 `proofread` 스킬을 먼저 적용하라는 지시를 Claude의 컨텍스트에 추가합니다.
-3. Claude는 사용자가 쓴 문장을 교정한 결과를 응답의 맨 앞에 보여 주고, 교정된 의미를 기준으로 원래 요청을 수행합니다.
-
-위 이미지에 나온 요청을 입력하면 실제로는 다음과 같이 출력됩니다.
+Claude는 사용자가 쓴 문장을 교정한 결과를 응답의 맨 앞에 보여 주고, 교정된 의미를 기준으로 원래 요청을 수행합니다. 위 이미지에 나온 요청을 입력하면 실제로는 다음과 같이 출력됩니다.
 
 ```
 📝 中文校对
@@ -33,12 +31,6 @@ Claude Code에 중국어로 요청을 입력하면, Claude가 먼저 그 중국�
 
 - 코드, 명령어, 파일 경로, 식별자, 약어(`API`, `JSON`, `PR`), 제품이나 서비스의 이름, 브랜치 이름처럼 원래 영어로 쓰는 부분
 - `bug`처럼 중국어 문장에서도 영어로 굳어진 단어
-
-판별 기준은 다음과 같습니다. 영문 코드와 식별자는 판별에 반영하지 않으므로, 코드가 섞인 중국어 문장도 중국어로 판별됩니다.
-
-- 한자가 4자 이상 있어야 합니다. 다만 영문자가 섞여 있고 한글이 없다면 한자가 1자만 있어도 됩니다. `跑local server.`처럼 모르는 단어를 영어로 대신 쓴 짧은 문장도 교정하기 위해서입니다.
-- 히라가나나 가타카나가 섞여 있으면 일본어로 보고 제외합니다.
-- 한자 수와 한글 수를 더한 값에서 한자가 차지하는 비율이 50% 이상이어야 합니다.
 
 ## 설치
 
@@ -66,6 +58,32 @@ Claude Code에서 다음 명령을 실행합니다.
 - 상태는 `~/.claude/chinese-proofread/state.json`에 저장되므로, 모든 프로젝트와 세션에 함께 적용되고 Claude Code를 다시 시작해도 유지됩니다.
 - 이 명령은 사용자가 직접 입력할 때만 실행됩니다. Claude가 스스로 판단하여 기능을 끄거나 켜지는 않습니다.
 
+## 설정
+
+환경 변수로 동작을 조정할 수 있습니다.
+
+| 환경 변수 | 기본값 | 설명 |
+|---|---|---|
+| `CHINESE_PROOFREAD_ENABLED` | (없음) | `0`으로 설정하면 교정 기능을 끕니다. 사용 방법은 [특정 프로젝트에서 항상 끄기](#특정-프로젝트에서-항상-끄기)에서 설명합니다. |
+| `CHINESE_PROOFREAD_LANG` | `Korean` | 교정 설명에 사용할 언어입니다. |
+| `CHINESE_PROOFREAD_MIN_HANZI` | `4` | 중국어로 판별하는 데 필요한 최소 한자 수입니다. |
+| `CHINESE_PROOFREAD_MIN_HANZI_MIXED` | `1` | 영문자가 섞여 있고 한글이 없는 입력에 적용하는 최소 한자 수입니다. `CHINESE_PROOFREAD_MIN_HANZI`보다 크게 설정하면 `CHINESE_PROOFREAD_MIN_HANZI` 값을 씁니다. |
+| `CHINESE_PROOFREAD_HANZI_RATIO` | `0.5` | 한자와 한글을 합한 글자 수에서 한자가 차지해야 하는 최소 비율입니다. |
+
+`MIN_HANZI`, `MIN_HANZI_MIXED`, `HANZI_RATIO`가 판별에 어떻게 쓰이는지는 [중국어 판별 기준](#중국어-판별-기준)에서 설명합니다.
+
+숫자를 받는 설정에 숫자가 아닌 값을 넣으면 그 설정은 기본값으로 동작합니다.
+
+예를 들어 설명을 영어로 받으려면 `~/.claude/settings.json`에 다음 내용을 추가합니다.
+
+```json
+{
+  "env": {
+    "CHINESE_PROOFREAD_LANG": "English"
+  }
+}
+```
+
 ### 특정 프로젝트에서 항상 끄기
 
 중국어 문서를 다루는 저장소처럼 특정 프로젝트에서는 교정 기능을 항상 끄고 싶다면, 그 프로젝트의 `.claude/settings.json`에 다음 내용을 추가합니다.
@@ -82,54 +100,15 @@ Claude Code에서 다음 명령을 실행합니다.
 - 환경 변수를 추가하거나 바꾼 뒤에는 Claude Code를 다시 시작해야 반영됩니다.
 - 모든 프로젝트에서 항상 끄려면 같은 내용을 `~/.claude/settings.json`에 추가합니다. 다만 잠시 끄는 용도라면 환경 변수보다 `/chinese-proofread:toggle off`가 더 편리합니다.
 
-## 설정
+## 중국어 판별 기준
 
-환경 변수로 동작을 조정할 수 있습니다.
+입력한 프롬프트가 다음 조건을 모두 만족하면 중국어로 판별합니다. 영문 코드와 식별자는 판별에 반영하지 않으므로, 코드가 섞인 중국어 문장도 중국어로 판별됩니다.
 
-| 환경 변수 | 기본값 | 설명 |
-|---|---|---|
-| `CHINESE_PROOFREAD_ENABLED` | (없음) | `0`으로 설정하면 `toggle` 명령으로 저장한 상태와 관계없이 교정 기능을 끕니다. |
-| `CHINESE_PROOFREAD_LANG` | `Korean` | 교정 설명에 사용할 언어입니다. |
-| `CHINESE_PROOFREAD_MIN_HANZI` | `4` | 중국어로 판별하는 데 필요한 최소 한자 수입니다. |
-| `CHINESE_PROOFREAD_MIN_HANZI_MIXED` | `1` | 영문자가 섞여 있고 한글이 없는 입력에 적용하는 최소 한자 수입니다. `CHINESE_PROOFREAD_MIN_HANZI`보다 크게 설정하면 `CHINESE_PROOFREAD_MIN_HANZI` 값을 씁니다. |
-| `CHINESE_PROOFREAD_HANZI_RATIO` | `0.5` | 한자와 한글을 합한 글자 수에서 한자가 차지해야 하는 최소 비율입니다. |
+- 한자가 4자 이상 있어야 합니다(`MIN_HANZI`). 다만 영문자가 섞여 있고 한글이 없다면 한자가 1자만 있어도 됩니다(`MIN_HANZI_MIXED`). `跑local server.`처럼 모르는 단어를 영어로 대신 쓴 짧은 문장도 교정하기 위해서입니다.
+- 히라가나나 가타카나가 없어야 합니다. 둘 중 하나라도 섞여 있으면 일본어로 보고 제외합니다.
+- 한자 수와 한글 수를 더한 값에서 한자가 차지하는 비율이 50% 이상이어야 합니다(`HANZI_RATIO`).
 
-숫자를 받는 설정에 숫자가 아닌 값을 넣으면 그 설정은 기본값으로 동작합니다.
-
-예를 들어 설명을 영어로 받으려면 `~/.claude/settings.json`에 다음 내용을 추가합니다.
-
-```json
-{
-  "env": {
-    "CHINESE_PROOFREAD_LANG": "English"
-  }
-}
-```
-
-## 저장소 구조
-
-```
-.claude-plugin/marketplace.json            마켓플레이스 정의
-plugins/chinese-proofread/
-  .claude-plugin/plugin.json               플러그인 정의
-  hooks/hooks.json                         UserPromptSubmit 훅 등록
-  hooks/detect_chinese.py                  중국어 판별 스크립트
-  scripts/toggle.py                        교정 기능의 상태를 바꾸는 스크립트
-  skills/proofread/SKILL.md                교정 절차와 출력 형식
-  skills/toggle/SKILL.md                   교정 기능을 켜고 끄는 명령
-tests/test_detect_chinese.py               중국어 판별 스크립트의 테스트
-.github/workflows/test.yml                 테스트를 실행하는 GitHub Actions 워크플로
-```
-
-## 테스트
-
-판별 스크립트를 수정했다면 커밋하기 전에 저장소 루트에서 다음 명령을 실행합니다. 외부 패키지는 필요하지 않습니다.
-
-```
-python3 -m unittest discover -s tests
-```
-
-`main` 브랜치에 push하거나 pull request를 열면 GitHub Actions가 Python 3.9와 3.14에서 같은 테스트를 실행합니다.
+괄호 안의 이름은 각 조건의 기준값을 바꾸는 환경 변수의 이름에서 `CHINESE_PROOFREAD_`를 뺀 것입니다. 위 숫자는 모두 기본값이며, [설정](#설정)에 나온 환경 변수로 바꿀 수 있습니다.
 
 ## 한계
 
@@ -147,3 +126,36 @@ python3 -m unittest discover -s tests
 - [평가 결과](docs/eval-results.md): 중국어 판별 정확도와 교정 품질을 평가한 결과를 기록했습니다. 평가마다 날짜, 대상 커밋, 모델, 수치를 적어서, `SKILL.md`를 고치기 전과 후의 결과를 비교할 수 있게 했습니다.
 
 `docs/`의 `eval-6-3-*` 문서는 교정 품질 평가를 진행하면서 남긴 중간 기록입니다. 평가 결과 문서에서 각 단계의 세부 내용이 필요한 곳마다 이 문서들을 안내합니다.
+
+## 개발하기
+
+### 동작 방식
+
+1. `UserPromptSubmit` 훅이 입력된 프롬프트를 검사하여 중국어인지 판별합니다. 판별 기준은 [중국어 판별 기준](#중국어-판별-기준)에 정리했습니다.
+2. 중국어라고 판별되면, 훅은 `proofread` 스킬을 먼저 적용하라는 지시를 Claude의 컨텍스트에 추가합니다.
+3. Claude는 `proofread` 스킬에 정의된 절차에 따라 교정 블록을 먼저 출력하고 원래 요청을 수행합니다. 출력 형식은 [교정 결과 예시](#교정-결과-예시)에서 볼 수 있습니다.
+
+### 저장소 구조
+
+```
+.claude-plugin/marketplace.json            마켓플레이스 정의
+plugins/chinese-proofread/
+  .claude-plugin/plugin.json               플러그인 정의
+  hooks/hooks.json                         UserPromptSubmit 훅 등록
+  hooks/detect_chinese.py                  중국어 판별 스크립트
+  scripts/toggle.py                        교정 기능의 상태를 바꾸는 스크립트
+  skills/proofread/SKILL.md                교정 절차와 출력 형식
+  skills/toggle/SKILL.md                   교정 기능을 켜고 끄는 명령
+tests/test_detect_chinese.py               중국어 판별 스크립트의 테스트
+.github/workflows/test.yml                 테스트를 실행하는 GitHub Actions 워크플로
+```
+
+### 테스트
+
+판별 스크립트를 수정했다면 커밋하기 전에 저장소 루트에서 다음 명령을 실행합니다. 외부 패키지는 필요하지 않습니다.
+
+```
+python3 -m unittest discover -s tests
+```
+
+`main` 브랜치에 push하거나 pull request를 열면 GitHub Actions가 Python 3.9와 3.14에서 같은 테스트를 실행합니다.
