@@ -98,7 +98,13 @@ def no_edits():
          "min": 0, "max": 0},
         {"name": "ask-no-write", "type": "tool_used", "tool": "Write",
          "min": 0, "max": 0},
-        reply_has(r"[?？]", "ask-question"),
+        # A question about the request itself. Models often end with an
+        # unrelated offer to fix the + 1 bug, which a bare "?" would count.
+        # "Tell me whether to delete ..." asks without a question mark.
+        reply_has(r"(?:^|[.。!！?？\n])(?:(?!고치|고칠|고쳐|修|bug|버그|\+ ?1)"
+                  r"[^.。!！?？\n])*[?？]"
+                  r"|(?:지울|지우|삭제|删)[^.。!！?？\n]*(?:알려|말씀해|告诉)",
+                  "ask-question"),
     ]
 
 
