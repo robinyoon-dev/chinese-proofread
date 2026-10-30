@@ -11,7 +11,7 @@ import json
 import sys
 
 from detect_chinese import chat_instruction, set_pending
-from require_block_first import BLOCK, CONTINUE, read_pending
+from require_block_first import BLOCK, CONTINUE, CONTINUE_AGAIN, read_pending
 
 REASON = (
     "The user has seen the proofreading block. Now carry out the user's "
@@ -27,7 +27,8 @@ def main():
     except (ValueError, AttributeError):
         return
     prompt_id = data.get("prompt_id")
-    if not isinstance(prompt_id, str) or read_pending(session_id) != CONTINUE + prompt_id:
+    if not isinstance(prompt_id, str) or read_pending(session_id) not in (
+            CONTINUE + prompt_id, CONTINUE_AGAIN + prompt_id):
         return
     set_pending(session_id, None)
     message = data.get("last_assistant_message")

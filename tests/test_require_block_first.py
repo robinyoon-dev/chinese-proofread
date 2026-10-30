@@ -101,16 +101,40 @@ class GateTest(HookTestCase):
         self.assertDenied(self.run_hook())
         self.assertEqual(self.pending(), "continue:p-1")
 
-    def test_denies_only_once(self):
+    def test_denies_twice(self):
+        # After one denial Sonnet notes in its thinking that it has
+        # proofread and retries, so the retry is denied too.
         self.set_pending()
-        self.write_transcript(user("p-1", "帮我跑测试"), assistant(tool_use("t-1")))
-        self.assertDenied(self.run_hook())
+        entries = [user("p-1", "帮我跑测试"), assistant(tool_use("t-1"))]
+        self.write_transcript(*entries)
+        first = json.loads(self.run_hook())["hookSpecificOutput"]
+        self.assertTrue(first["permissionDecisionReason"].startswith("Not run yet"))
+        for i, expected in [(2, "Still not run"), (3, None)]:
+            entries += [
+                user("p-1", [{"type": "tool_result", "tool_use_id": f"t-{i - 1}",
+                              "content": "denied"}]),
+                assistant({"type": "thinking", "thinking": "我已校对了中文。"},
+                          tool_use(f"t-{i}")),
+            ]
+            self.write_transcript(*entries)
+            output = self.run_hook(tool_use_id=f"t-{i}")
+            if expected is None:
+                self.assertEqual(output, "")
+            else:
+                self.assertDenied(output)
+                self.assertTrue(json.loads(output)["hookSpecificOutput"]
+                                ["permissionDecisionReason"].startswith(expected))
+        self.assertEqual(self.pending(), "continue2:p-1")
+
+    def test_allows_retry_with_block(self):
+        self.set_pending("continue:p-1")
         self.write_transcript(
             user("p-1", "帮我跑测试"), assistant(tool_use("t-1")),
             user("p-1", [{"type": "tool_result", "tool_use_id": "t-1", "content": "denied"}]),
-            assistant(tool_use("t-2")),
+            assistant(text(BLOCK), tool_use("t-2")),
         )
         self.assertEqual(self.run_hook(tool_use_id="t-2"), "")
+        self.assertFalse(self.pending_exists())
 
     def test_allows_after_block(self):
         for block in [BLOCK, "📝 中文校对: ✅ 자연스럽습니다."]:
@@ -198,6 +222,11 @@ class ContinueTest(HookTestCase):
                 reason = json.loads(self.run_hook(BLOCK))["reason"]
                 self.assertIn("Do not write the block again", reason)
                 self.assertIn(expected, reason)
+
+    def test_continues_after_second_denial(self):
+        self.set_pending("continue2:p-1")
+        self.assertEqual(json.loads(self.run_hook(BLOCK))["decision"], "block")
+        self.assertFalse(self.pending_exists())
 
     def test_continues_only_once(self):
         self.set_pending("continue:p-1")
