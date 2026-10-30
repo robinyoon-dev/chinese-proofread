@@ -121,6 +121,12 @@ def keeps_in_fix(word, name):
     return reply_lacks(rf"^修正:(?!.*{word}).*$", name, "m")
 
 
+def fixed_in(error, name="detect-fixed"):
+    # A 修正 line without the planted error. A ✅ line or a missing block
+    # fails, since the error was not corrected either way.
+    return reply_has(rf"^修正:(?!.*(?:{error})).*$", name, "m")
+
+
 def replaced_in_fix(word, name="substitute-replaced"):
     # A word with a Chinese equivalent must not stay in the 修正 line.
     return reply_lacks(rf"^修正:.*{word}", name, "m")
@@ -138,7 +144,7 @@ CASES = [
         "prompt": "帮我修改一下utils.py的bug，他让average的结果总是多一",
         "expect": "他 → 它 (사물)",
         "files": {"utils.py": UTILS},
-        "graders": [AVERAGE_FIXED],
+        "graders": [fixed_in(r"他"), AVERAGE_FIXED],
     },
     {
         "name": "fix-de-complement",
@@ -146,7 +152,7 @@ CASES = [
         "prompt": "帮我把greet函数写得更简洁地，用f-string",
         "expect": "写得更简洁地 → 写得更简洁 (得 보어 뒤 地 불필요)",
         "files": {"utils.py": UTILS},
-        "graders": [file_has("utils.py", r"f[\"']Hello")],
+        "graders": [fixed_in(r"简洁地"), file_has("utils.py", r"f[\"']Hello")],
     },
     {
         "name": "fix-place-word-order",
@@ -154,7 +160,7 @@ CASES = [
         "prompt": "帮我加一个函数在utils.py的最后，用来求最大值",
         "expect": "加一个函数在utils.py的最后 → 在utils.py的最后加一个函数 (장소 부사어는 동사 앞)",
         "files": {"utils.py": UTILS},
-        "graders": [file_has("utils.py", r"max")],
+        "graders": [fixed_in(r"加一个函数在"), file_has("utils.py", r"max")],
     },
     {
         "name": "fix-shi-before-adjective",
@@ -162,7 +168,7 @@ CASES = [
         "prompt": "average函数的名字是太短了，帮我改成calculate_average",
         "expect": "是太短了 → 太短了 (형용사 술어 앞 是 불필요)",
         "files": {"utils.py": UTILS},
-        "graders": [file_has("utils.py", r"def calculate_average")],
+        "graders": [fixed_in(r"是太短"), file_has("utils.py", r"def calculate_average")],
     },
     {
         "name": "fix-gei-word-order",
@@ -170,7 +176,7 @@ CASES = [
         "prompt": "帮我写一个测试给average函数，放在test_utils.py里",
         "expect": "写一个测试给average函数 → 给average函数写一个测试 (给 구는 동사 앞)",
         "files": {"utils.py": UTILS},
-        "graders": [file_has("test_utils.py", r"average")],
+        "graders": [fixed_in(r"测试给"), file_has("test_utils.py", r"average")],
     },
     {
         "name": "fix-le-in-modifier",
@@ -178,7 +184,7 @@ CASES = [
         "prompt": "我昨天写了的代码有问题，你帮我看看utils.py哪里错了",
         "expect": "写了的代码 → 写的代码 (관형어 안의 了 불필요)",
         "files": {"utils.py": UTILS},
-        "graders": [FINDS_PLUS_ONE],
+        "graders": [fixed_in(r"写了的"), FINDS_PLUS_ONE],
     },
     {
         "name": "fix-double-question",
@@ -186,7 +192,7 @@ CASES = [
         "prompt": "请你帮我检查一下utils.py有没有错误吗？",
         "expect": "有没有错误吗 → 有没有错误 (정반의문문에 吗 중복)",
         "files": {"utils.py": UTILS},
-        "graders": [FINDS_PLUS_ONE],
+        "graders": [fixed_in(r"有没有.*吗"), FINDS_PLUS_ONE],
     },
     {
         "name": "fix-zai-word-order",
@@ -194,7 +200,7 @@ CASES = [
         "prompt": "帮我把greet里的print改成return，因为我想要用这个结果在别的地方",
         "expect": "用这个结果在别的地方 → 在别的地方用这个结果 (장소 부사어는 동사 앞)",
         "files": {"utils.py": UTILS},
-        "graders": [GREET_RETURNS],
+        "graders": [fixed_in(r"用这个结果在"), GREET_RETURNS],
     },
     # --- ok: natural sentences, no correction expected ---
     {
@@ -241,7 +247,7 @@ CASES = [
         "prompt": "哎呀，utils.py里的average又出错了，快帮我把他修好呗。",
         "expect": "他 → 它 (사물), 구어체(哎呀, 呗) 유지",
         "files": {"utils.py": UTILS},
-        "graders": [AVERAGE_FIXED, keeps_in_fix("呗", "tone-keep")],
+        "graders": [fixed_in(r"他"), AVERAGE_FIXED, keeps_in_fix("呗", "tone-keep")],
     },
     # --- punctuation-only differences (9-1) ---
     {
@@ -265,7 +271,7 @@ CASES = [
         # With another fix in the block, a punctuation note is fine.
         "expect": "他 → 它 (사물). 다른 교정과 함께라면 문장부호 설명은 허용",
         "files": {"utils.py": UTILS},
-        "graders": [AVERAGE_FIXED],
+        "graders": [fixed_in(r"他"), AVERAGE_FIXED],
     },
     # --- pasted code, logs and errors must not be proofread ---
     {
@@ -314,7 +320,7 @@ CASES = [
         ),
         "expect": "请解释给我 → 请给我解释一下 (给 구는 동사 앞). 코드 주석의 的的는 교정하지 않음",
         "files": {},
-        "graders": [
+        "graders": [fixed_in(r"解释给我"),
             reply_has(r"평균", "work-answer"),
             not_in_original("平均数的的"),
         ],

@@ -48,6 +48,7 @@ FILE_END = "__EVAL_FILE_END__"
 # Metric prefixes of grader names, in report order.
 METRICS = {
     "format": "형식 준수",
+    "detect": "오류 검출",
     "overfix": "과잉 교정 없음",
     "work": "작업 계속 수행",
     "pinyin": "병음 형식",
