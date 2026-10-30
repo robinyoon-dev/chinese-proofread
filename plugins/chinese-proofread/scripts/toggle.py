@@ -7,8 +7,10 @@ and session, and detect_chinese.py reads it on each prompt.
 Usage: toggle.py [on|off|status]   (no argument flips the current state)
 
 Env:
-  CHINESE_PROOFREAD_ENABLED  set to 0 to keep proofreading off regardless of
-                             the state file
+  CHINESE_PROOFREAD_ENABLED    set to 0 to keep proofreading off regardless
+                               of the state file
+  CHINESE_PROOFREAD_LANG       shown as the explanation language
+  CHINESE_PROOFREAD_CHAT_LANG  shown as the chat reply language
 """
 
 import json
@@ -55,7 +57,14 @@ def main():
                 "CHINESE_PROOFREAD_ENABLED=0 is set, so proofreading stays off "
                 "until that variable is removed."
             )
-    print("Reply language: " + os.environ.get("CHINESE_PROOFREAD_LANG", "Korean"))
+    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
+    chat_lang = os.environ.get("CHINESE_PROOFREAD_CHAT_LANG", "").strip()
+    if not chat_lang:
+        chat_lang = lang
+    elif chat_lang.lower() == "prompt":
+        chat_lang = "same as the prompt"
+    print("Explanation language: " + lang)
+    print("Chat reply language: " + chat_lang)
 
 
 if __name__ == "__main__":

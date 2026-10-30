@@ -125,6 +125,32 @@ class HookTest(unittest.TestCase):
         output = self.run_prompt("帮我重构一下这个函数", CHINESE_PROOFREAD_LANG="English")
         self.assertIn("in English", output)
 
+    def chat_context(self, **env):
+        output = json.loads(self.run_prompt("帮我重构一下这个函数", **env))
+        context = output["hookSpecificOutput"]["additionalContext"]
+        return context.split("When you print the proofreading block", 1)[1]
+
+    def test_chat_lang_default(self):
+        self.assertIn("user in Korean", self.chat_context())
+        self.assertIn(
+            "user in English", self.chat_context(CHINESE_PROOFREAD_LANG="English")
+        )
+        self.assertIn(
+            "user in Korean", self.chat_context(CHINESE_PROOFREAD_CHAT_LANG=" ")
+        )
+
+    def test_chat_lang_prompt(self):
+        for value in ["prompt", "Prompt"]:
+            self.assertIn(
+                "the language the user wrote the request in",
+                self.chat_context(CHINESE_PROOFREAD_CHAT_LANG=value),
+            )
+
+    def test_chat_lang_name(self):
+        context = self.chat_context(CHINESE_PROOFREAD_CHAT_LANG="Chinese")
+        self.assertIn("user in Chinese", context)
+        self.assertIn("commit messages", context)
+
     def test_not_chinese_prompt(self):
         self.assertEqual(self.run_prompt("이 함수를 리팩터링해 줘"), "")
 
