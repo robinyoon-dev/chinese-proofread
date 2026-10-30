@@ -82,8 +82,8 @@ PINYIN_NOT_NUMERIC = regex(
 DIAG = [
     {"name": "diag-skill-used", "type": "tool_used", "tool": "Skill",
      "input_match": r'"skill"\s*:\s*"(?:[\w-]+:)?proofread"', "min": 1},
-    # The block in any text block, not only the final one. A block that only
-    # shows up here was printed before the work instead of in the final reply.
+    # The block in any text block, not only the final one. The block is
+    # printed before the work, so it is usually not in the final reply.
     # The trace is JSON, so a leading newline appears as the two characters \n.
     regex("diag-block-in-text", r'"text":\s*"(?:\\n|\s)*📝 中文校对',
           target="trace"),
