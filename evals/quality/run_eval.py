@@ -92,13 +92,22 @@ EXPLAIN = regex(
     r"^설명:[ \t]*\n- (?![^\n]*[가-힣])"
     r"|^- [\u4e00-\u9fff][^\n]*→(?![^\n]*[가-힣])"
     r"|📝 中文校对: ✅(?![^\n]*[가-힣])", "not_contains", "m")
-# A Korean sentence after the block's closing -{3} line or its ✅ line.
-# Explanations inside the block do not count, and a Chinese reply has no
-# Korean sentence endings. none cases get no CHAT: without a block the plugin
-# stays out of the reply, language included.
+# After the block's closing -{3} line or its ✅ line: a Korean sentence, and no
+# Chinese sentence outside a ``` fence. Explanations inside the block do not
+# count. A Chinese sentence is a run of hanzi without Hangul or backticks that
+# ends in 。？！, so Chinese quoted in backticks or a code fence (a comment
+# or README text the user asked for) is not one. Without the second check, a
+# Korean progress note followed by a Chinese reply passed. none cases get no
+# CHAT: without a block the plugin stays out of the reply, language included.
+FENCE_FREE = r"(?:(?!`{3})[\s\S])*"
+CHINESE_SENTENCE = (
+    r"[\u4e00-\u9fff][^\n`가-힣]*[。？！](?![`'\"」”])"
+    # An even number of fences left means the sentence is outside a fence.
+    r"(?=(?:" + FENCE_FREE + r"`{3}" + FENCE_FREE + r"`{3})*" + FENCE_FREE + r"$)")
 CHAT = regex(
     "chat-korean",
     r"(?:\n-{3}[ \t]*\n|📝 中文校对: ✅[^\n]*\n)"
+    r"(?![\s\S]*" + CHINESE_SENTENCE + r")"
     r"[\s\S]*?[가-힣](?:니다|세요|어요|아요|해요|까요|게요|죠)[.?!]")
 DIAG = [
     {"name": "diag-skill-used", "type": "tool_used", "tool": "Skill",
