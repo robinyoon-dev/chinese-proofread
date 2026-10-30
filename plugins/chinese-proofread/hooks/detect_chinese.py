@@ -15,7 +15,11 @@ Does nothing while proofreading is turned off with the toggle skill.
 
 Env:
   CHINESE_PROOFREAD_ENABLED      set to 0 to keep proofreading off
-  CHINESE_PROOFREAD_LANG         language for explanations (default: Korean)
+  CHINESE_PROOFREAD_LANG         language for the explanations in the
+                                 proofreading block (default: Korean)
+  CHINESE_PROOFREAD_CHAT_LANG    language for replies to the user: unset for
+                                 CHINESE_PROOFREAD_LANG, "prompt" for the
+                                 language of the request, or a language name
   CHINESE_PROOFREAD_MIN_HANZI    minimum hanzi (default: 4)
   CHINESE_PROOFREAD_MIN_HANZI_MIXED
                                  minimum hanzi with Latin letters or Hangul
@@ -51,6 +55,15 @@ def env_number(name, default, convert):
         return convert(os.environ[name])
     except (KeyError, ValueError):
         return default
+
+
+def chat_language(lang):
+    chat_lang = os.environ.get("CHINESE_PROOFREAD_CHAT_LANG", "").strip()
+    if not chat_lang:
+        return f"in {lang}"
+    if chat_lang.lower() == "prompt":
+        return "in the language the user wrote the request in"
+    return f"in {chat_lang}"
 
 
 def is_chinese(prompt, min_hanzi=4, min_hanzi_mixed=1, hanzi_ratio=0.0):
@@ -100,7 +113,14 @@ def main():
         f"hanja words), and explain the corrections in {lang}, "
         "then carry out the request based on the corrected meaning. "
         "If the user wrote no Chinese of their own, skip proofreading "
-        "without mentioning it."
+        "without mentioning it. "
+        "When you print the proofreading block, write everything else you "
+        f"say to the user {chat_language(lang)}, "
+        "including progress updates, questions, and the final summary, "
+        "unless the user asks for another language. This does not apply to "
+        "what the work produces, such as code, code comments, commit "
+        "messages, and file contents, which follow the request and the "
+        "repository's conventions."
     )
     json.dump(
         {
