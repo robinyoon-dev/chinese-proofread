@@ -13,6 +13,9 @@ skips Korean sentences with only a few hanzi.
 
 Does nothing while proofreading is turned off with the toggle skill.
 
+For a Chinese prompt it also leaves a pending file with the prompt id, so
+require_block_first.py can check that the block is shown before the work.
+
 Env:
   CHINESE_PROOFREAD_ENABLED      set to 0 to keep proofreading off
   CHINESE_PROOFREAD_LANG         language for explanations (default: Korean)
@@ -29,6 +32,7 @@ import sys
 
 # Keep in sync with STATE_PATH in scripts/toggle.py.
 STATE_PATH = os.path.expanduser("~/.claude/chinese-proofread/state.json")
+PENDING_DIR = os.path.expanduser("~/.claude/chinese-proofread/pending")
 
 
 def count(text, *ranges):
@@ -51,6 +55,28 @@ def env_number(name, default, convert):
         return convert(os.environ[name])
     except (KeyError, ValueError):
         return default
+
+
+def pending_path(session_id):
+    # Session ids are UUIDs; anything else could point outside PENDING_DIR.
+    if not isinstance(session_id, str) or not session_id.replace("-", "").isalnum():
+        return None
+    return os.path.join(PENDING_DIR, session_id)
+
+
+def set_pending(session_id, prompt_id):
+    path = pending_path(session_id)
+    if path is None:
+        return
+    try:
+        if isinstance(prompt_id, str):
+            os.makedirs(PENDING_DIR, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(prompt_id)
+        else:
+            os.remove(path)
+    except OSError:
+        pass
 
 
 def is_chinese(prompt, min_hanzi=4, min_hanzi_mixed=1, hanzi_ratio=0.0):
@@ -77,7 +103,8 @@ def main():
         return
 
     try:
-        prompt = json.load(sys.stdin).get("prompt", "")
+        data = json.load(sys.stdin)
+        prompt = data.get("prompt", "")
     except (ValueError, AttributeError):
         return
     if not isinstance(prompt, str):
@@ -89,7 +116,9 @@ def main():
     lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
 
     if not is_chinese(prompt, min_hanzi, min_hanzi_mixed, hanzi_ratio):
+        set_pending(data.get("session_id"), None)
         return
+    set_pending(data.get("session_id"), data.get("prompt_id"))
 
     context = (
         "The user wrote this prompt in Chinese. Before doing anything else, "
