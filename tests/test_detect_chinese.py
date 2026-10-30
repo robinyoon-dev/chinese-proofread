@@ -128,7 +128,7 @@ class HookTest(unittest.TestCase):
     def chat_context(self, **env):
         output = json.loads(self.run_prompt("帮我重构一下这个函数", **env))
         context = output["hookSpecificOutput"]["additionalContext"]
-        return context.split("When you print the proofreading block", 1)[1]
+        return context.split("When you print the proofreading block, outside it", 1)[1]
 
     def test_chat_lang_default(self):
         self.assertIn("user in Korean", self.chat_context())

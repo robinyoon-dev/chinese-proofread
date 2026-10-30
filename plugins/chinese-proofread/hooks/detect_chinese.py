@@ -92,6 +92,19 @@ def chat_language(lang):
     return f"in {chat_lang}"
 
 
+def chat_instruction():
+    # Shared with continue_after_block.py, which repeats it when the turn goes on.
+    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
+    return (
+        f"write everything you say to the user {chat_language(lang)}, "
+        "including progress updates, questions, and the final summary, "
+        "unless the user asks for another language. This does not apply to "
+        "what the work produces, such as code, code comments, commit "
+        "messages, and file contents, which follow the request and the "
+        "repository's conventions."
+    )
+
+
 def is_chinese(prompt, min_hanzi=4, min_hanzi_mixed=1, hanzi_ratio=0.0):
     hanzi = count(prompt, (0x4E00, 0x9FFF), (0x3400, 0x4DBF))
     kana = count(prompt, (0x3040, 0x30FF))
@@ -143,13 +156,8 @@ def main():
         "then carry out the request based on the corrected meaning. "
         "If the user wrote no Chinese of their own, skip proofreading "
         "without mentioning it. "
-        "When you print the proofreading block, write everything else you "
-        f"say to the user {chat_language(lang)}, "
-        "including progress updates, questions, and the final summary, "
-        "unless the user asks for another language. This does not apply to "
-        "what the work produces, such as code, code comments, commit "
-        "messages, and file contents, which follow the request and the "
-        "repository's conventions."
+        "When you print the proofreading block, outside it "
+        + chat_instruction()
     )
     json.dump(
         {

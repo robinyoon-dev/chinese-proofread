@@ -183,6 +183,22 @@ class ContinueTest(HookTestCase):
         self.assertEqual(output["decision"], "block")
         self.assertFalse(self.pending_exists())
 
+    def test_continue_reason_has_chat_language(self):
+        for env, expected in [
+            ({}, "user in Korean"),
+            ({"CHINESE_PROOFREAD_LANG": "English"}, "user in English"),
+            ({"CHINESE_PROOFREAD_CHAT_LANG": "prompt"},
+             "the language the user wrote the request in"),
+        ]:
+            with self.subTest(env=env):
+                self.env = {k: v for k, v in self.env.items()
+                            if not k.startswith("CHINESE_PROOFREAD_")}
+                self.env.update(env)
+                self.set_pending("continue:p-1")
+                reason = json.loads(self.run_hook(BLOCK))["reason"]
+                self.assertIn("Do not write the block again", reason)
+                self.assertIn(expected, reason)
+
     def test_continues_only_once(self):
         self.set_pending("continue:p-1")
         self.run_hook(BLOCK)

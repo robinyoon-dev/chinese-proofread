@@ -10,12 +10,13 @@ skipped the block and finished the work instead, the turn ends as usual.
 import json
 import sys
 
-from detect_chinese import set_pending
+from detect_chinese import chat_instruction, set_pending
 from require_block_first import BLOCK, CONTINUE, read_pending
 
 REASON = (
     "The user has seen the proofreading block. Now carry out the user's "
-    "request based on the corrected meaning. Do not write the block again."
+    "request based on the corrected meaning. Do not write the block again. "
+    "From here on, "
 )
 
 
@@ -32,7 +33,8 @@ def main():
     message = data.get("last_assistant_message")
     if not isinstance(message, str) or BLOCK not in message:
         return
-    json.dump({"decision": "block", "reason": REASON}, sys.stdout)
+    json.dump({"decision": "block", "reason": REASON + chat_instruction()},
+              sys.stdout)
 
 
 if __name__ == "__main__":
