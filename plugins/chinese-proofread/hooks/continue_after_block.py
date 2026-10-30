@@ -3,8 +3,12 @@
 
 require_block_first.py asks Claude to write the proofreading block in a reply
 with no tool calls, which would end the turn before the request is done. If
-that reply has the block, this hook keeps the turn going once. If Claude
-skipped the block and finished the work instead, the turn ends as usual.
+that reply has the block, this hook keeps the turn going once.
+
+A denied Claude can also give up without the block and report that a hook is
+blocking it, which Opus did, so a turn that ends after a denial is kept going
+once as well, with the gate lifted. If Claude got past the denials and
+finished the work, the pending file is gone and the turn ends as usual.
 """
 
 import json
@@ -17,6 +21,11 @@ REASON = (
     "The user has seen the proofreading block. Now carry out the user's "
     "request based on the corrected meaning. Do not write the block again. "
     "From here on, "
+)
+GATE_LIFTED = (
+    "Your tool calls are no longer blocked. Carry out the user's request "
+    "now, based on the corrected meaning, without mentioning the hook. If "
+    "the request is already done, stop without repeating it. From here on, "
 )
 
 
@@ -32,9 +41,9 @@ def main():
         return
     set_pending(session_id, None)
     message = data.get("last_assistant_message")
-    if not isinstance(message, str) or BLOCK not in message:
-        return
-    json.dump({"decision": "block", "reason": REASON + chat_instruction()},
+    has_block = isinstance(message, str) and BLOCK in message
+    reason = REASON if has_block else GATE_LIFTED
+    json.dump({"decision": "block", "reason": reason + chat_instruction()},
               sys.stdout)
 
 

@@ -9,7 +9,9 @@ the user would not see them until the work is done.
 
 After one denial Sonnet often notes in its thinking that it has proofread
 and makes the same call again, so a call is denied up to twice. The second
-denial says that thinking does not count; after it, calls are allowed.
+denial says that thinking does not count; after it, calls are allowed. The
+first allowed call clears the pending file, so a pending file at the end of
+the turn means Claude stopped without getting past a denial.
 
 Sonnet does write the block in a reply that has no tool calls, so the denial
 asks for exactly that, and continue_after_block.py then sends Claude back to
@@ -112,6 +114,9 @@ def main():
         reason, next_pending = REASON, CONTINUE + prompt_id
     elif pending == CONTINUE + prompt_id:
         reason, next_pending = REASON_AGAIN, CONTINUE_AGAIN + prompt_id
+    elif pending == CONTINUE_AGAIN + prompt_id:
+        set_pending(session_id, None)
+        return
     else:
         return
 

@@ -124,7 +124,7 @@ class GateTest(HookTestCase):
                 self.assertDenied(output)
                 self.assertTrue(json.loads(output)["hookSpecificOutput"]
                                 ["permissionDecisionReason"].startswith(expected))
-        self.assertEqual(self.pending(), "continue2:p-1")
+        self.assertFalse(self.pending_exists())
 
     def test_allows_retry_with_block(self):
         self.set_pending("continue:p-1")
@@ -233,11 +233,17 @@ class ContinueTest(HookTestCase):
         self.run_hook(BLOCK)
         self.assertEqual(self.run_hook(BLOCK), "")
 
-    def test_stops_when_block_was_skipped(self):
-        # Claude retried the call without the block and finished the work.
-        self.set_pending("continue:p-1")
-        self.assertEqual(self.run_hook("테스트를 작성했습니다."), "")
-        self.assertFalse(self.pending_exists())
+    def test_continues_when_giving_up_without_block(self):
+        # Opus reported that a hook was blocking it and ended the turn.
+        for pending in ["continue:p-1", "continue2:p-1"]:
+            with self.subTest(pending=pending):
+                self.set_pending(pending)
+                output = json.loads(self.run_hook("훅이 막고 있습니다."))
+                self.assertEqual(output["decision"], "block")
+                self.assertIn("no longer blocked", output["reason"])
+                self.assertIn("user in", output["reason"])
+                self.assertFalse(self.pending_exists())
+                self.assertEqual(self.run_hook("훅이 막고 있습니다."), "")
 
     def test_stops_without_denial(self):
         for pending in [None, "p-1", "continue:p-0"]:
