@@ -4,6 +4,8 @@
 
 Claude Code에 중국어로 요청을 입력하면, Claude가 먼저 그 중국어 문장이 자연스러운지 점검하고 교정한 다음에 요청을 수행하도록 만드는 플러그인입니다.
 
+<img src="docs/images/readme-hero.png" width="880" alt="중국어 요청 让这个function跑的更快를 Claude가 먼저 让这个函数跑得更快로 교정하고, function은 函数(hánshù)로, 的는 得로 고친 이유를 설명한 다음 요청을 수행하는 흐름">
+
 ## 동작 방식
 
 1. `UserPromptSubmit` 훅이 입력된 프롬프트를 검사하여 중국어인지 판별합니다.
