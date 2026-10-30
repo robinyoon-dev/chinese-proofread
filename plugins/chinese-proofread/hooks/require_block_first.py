@@ -13,6 +13,12 @@ denial says that thinking does not count; after it, calls are allowed. The
 first allowed call clears the pending file, so a pending file at the end of
 the turn means Claude stopped without getting past a denial.
 
+Claude calls the proofread skill first when the prompt has Chinese of the
+user's own, and works without it when the hanzi are only code, data or quoted
+text. So a session that has not loaded the skill is not denied: both models
+then took the denial for a broken hook and told the user about it. The check
+covers the whole session because Claude may not load the skill a second time.
+
 Sonnet does write the block in a reply that has no tool calls, so the denial
 asks for exactly that, and continue_after_block.py then sends Claude back to
 the work instead of letting the turn end there.
@@ -29,6 +35,7 @@ import time
 from detect_chinese import pending_path, set_pending
 
 BLOCK = "📝 中文校对"
+SKILL = "chinese-proofread:proofread"
 # Prefixes of the pending file after the first and the second denial; see
 # continue_after_block.py.
 CONTINUE = "continue:"
@@ -65,32 +72,53 @@ def read_pending(session_id):
         return None
 
 
-def reply_texts(transcript_path, prompt_id, tool_use_id):
-    """Text blocks Claude wrote since the prompt, or None if tool_use_id has
-    not reached the transcript yet."""
-    texts = []
-    found = False
-    started = False
+def transcript_entries(transcript_path):
+    entries = []
     try:
         with open(transcript_path, encoding="utf-8") as f:
             lines = f.readlines()
     except (OSError, TypeError, ValueError):
-        return None
+        return entries
     for line in lines:
         try:
             entry = json.loads(line)
         except ValueError:
             continue
-        if not isinstance(entry, dict):
-            continue
+        if isinstance(entry, dict):
+            entries.append(entry)
+    return entries
+
+
+def content_blocks(entry):
+    content = (entry.get("message") or {}).get("content")
+    if not isinstance(content, list):
+        return []
+    return [block for block in content if isinstance(block, dict)]
+
+
+def skill_loaded(entries):
+    return any(
+        block.get("type") == "tool_use"
+        and block.get("name") == "Skill"
+        and (block.get("input") or {}).get("skill") == SKILL
+        for entry in entries
+        if entry.get("type") == "assistant"
+        for block in content_blocks(entry)
+    )
+
+
+def reply_texts(entries, prompt_id, tool_use_id):
+    """Text blocks Claude wrote since the prompt, or None if tool_use_id has
+    not reached the transcript yet."""
+    texts = []
+    found = False
+    started = False
+    for entry in entries:
         if entry.get("type") == "user" and entry.get("promptId") == prompt_id:
             started = True
         if not started or entry.get("type") != "assistant":
             continue
-        content = (entry.get("message") or {}).get("content")
-        for block in content if isinstance(content, list) else []:
-            if not isinstance(block, dict):
-                continue
+        for block in content_blocks(entry):
             if block.get("type") == "text":
                 texts.append(block.get("text") or "")
             elif block.get("type") == "tool_use" and block.get("id") == tool_use_id:
@@ -121,15 +149,19 @@ def main():
         return
 
     deadline = time.time() + WAIT_SECONDS
-    texts = reply_texts(data.get("transcript_path"), prompt_id, data.get("tool_use_id"))
+    entries = transcript_entries(data.get("transcript_path"))
+    texts = reply_texts(entries, prompt_id, data.get("tool_use_id"))
     while texts is None and time.time() < deadline:
         time.sleep(0.02)
-        texts = reply_texts(data.get("transcript_path"), prompt_id, data.get("tool_use_id"))
+        entries = transcript_entries(data.get("transcript_path"))
+        texts = reply_texts(entries, prompt_id, data.get("tool_use_id"))
     if texts is None:
         return
 
     if any(BLOCK in text for text in texts):
         set_pending(session_id, None)
+        return
+    if not skill_loaded(entries):
         return
     # Deny at most twice, so a prompt with nothing to proofread costs two
     # retries at most.

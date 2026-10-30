@@ -28,8 +28,12 @@ def text(value):
     return {"type": "text", "text": value}
 
 
-def tool_use(tool_use_id, name="Bash"):
-    return {"type": "tool_use", "id": tool_use_id, "name": name, "input": {}}
+def tool_use(tool_use_id, name="Bash", **tool_input):
+    return {"type": "tool_use", "id": tool_use_id, "name": name, "input": tool_input}
+
+
+def load_skill(tool_use_id="t-0"):
+    return assistant(tool_use(tool_use_id, "Skill", skill="chinese-proofread:proofread"))
 
 
 class HookTestCase(unittest.TestCase):
@@ -94,7 +98,7 @@ class GateTest(HookTestCase):
         self.set_pending()
         self.write_transcript(
             user("p-1", "帮我跑测试"),
-            assistant(tool_use("t-0", "Skill")),
+            load_skill(),
             user("p-1", [{"type": "tool_result", "tool_use_id": "t-0", "content": "skill"}]),
             assistant({"type": "thinking", "thinking": BLOCK}, tool_use("t-1")),
         )
@@ -105,7 +109,7 @@ class GateTest(HookTestCase):
         # After one denial Sonnet notes in its thinking that it has
         # proofread and retries, so the retry is denied too.
         self.set_pending()
-        entries = [user("p-1", "帮我跑测试"), assistant(tool_use("t-1"))]
+        entries = [user("p-1", "帮我跑测试"), load_skill(), assistant(tool_use("t-1"))]
         self.write_transcript(*entries)
         first = json.loads(self.run_hook())["hookSpecificOutput"]
         self.assertTrue(first["permissionDecisionReason"].startswith("Not run yet"))
@@ -149,10 +153,36 @@ class GateTest(HookTestCase):
     def test_ignores_block_from_earlier_prompt(self):
         self.set_pending("p-2")
         self.write_transcript(
-            user("p-1", "帮我跑测试"), assistant(text(BLOCK)),
+            user("p-1", "帮我跑测试"), load_skill(), assistant(text(BLOCK)),
             user("p-2", "再跑一遍"), assistant(tool_use("t-1")),
         )
         self.assertDenied(self.run_hook(prompt_id="p-2"))
+
+    def test_allows_without_skill(self):
+        # Hanzi used as code or data: Claude skips the skill, and a denial
+        # would only make it tell the user about the hook.
+        self.set_pending()
+        self.write_transcript(user("p-1", "add 中 to the font test"), assistant(tool_use("t-1")))
+        self.assertEqual(self.run_hook(), "")
+        self.assertEqual(self.pending(), "p-1")
+
+    def test_other_skill_does_not_count(self):
+        self.set_pending()
+        self.write_transcript(
+            user("p-1", "add 中 to the font test"),
+            assistant(tool_use("t-0", "Skill", skill="chinese-proofread:toggle")),
+            assistant(tool_use("t-1")),
+        )
+        self.assertEqual(self.run_hook(), "")
+
+    def test_denies_after_skill_loaded_in_same_message(self):
+        self.set_pending()
+        self.write_transcript(
+            user("p-1", "帮我跑测试"),
+            assistant(tool_use("t-0", "Skill", skill="chinese-proofread:proofread"),
+                      tool_use("t-1")),
+        )
+        self.assertDenied(self.run_hook())
 
     def test_allows_skill(self):
         self.set_pending()
@@ -188,6 +218,7 @@ class GateTest(HookTestCase):
         with open(self.transcript, "w", encoding="utf-8") as f:
             f.write("not json\n[]\n")
             f.write(json.dumps(user("p-1", "帮我跑测试")) + "\n")
+            f.write(json.dumps(load_skill()) + "\n")
             f.write(json.dumps(assistant(tool_use("t-1"))) + "\n")
         self.assertDenied(self.run_hook())
 
