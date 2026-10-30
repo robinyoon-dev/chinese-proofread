@@ -108,7 +108,6 @@ KIND_GRADERS = {
         regex("overfix-no-note", r"✅ 자연스럽습니다\.[^\n]*\n[ \t]*- ",
               "not_contains"),
     ] + DIAG,
-    "note": [OK_FIRST, NO_ORIGINAL, PINYIN_NOT_NUMERIC] + DIAG,
     "ask": [regex("format-block-first", r"^\s*📝 中文校对"),
             SAME_AS_ORIGINAL] + DIAG,
     "none": [

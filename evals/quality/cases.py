@@ -8,8 +8,6 @@ never holds eval files.
 kind decides the format graders every case gets:
   fix   the user's Chinese has an error; expects a 原文 / 修正 block
   ok    natural Chinese; expects only the ✅ line
-  note  natural Chinese with English words; expects the ✅ line, with or
-        without explanation lines
   ask   the request has two readings; expects a question and no edits
   none  no Chinese sentence of the user's own; expects no block at all
 
@@ -115,6 +113,11 @@ NO_PUNCTUATION_NOTE = reply_lacks(r"마침표|문장부호|쉼표|구두점|전�
 def keeps_in_fix(word, name):
     # If there is a 修正 line, it still has the word.
     return reply_lacks(rf"^修正:(?!.*{word}).*$", name, "m")
+
+
+def replaced_in_fix(word, name="substitute-replaced"):
+    # A word with a Chinese equivalent must not stay in the 修正 line.
+    return reply_lacks(rf"^修正:.*{word}", name, "m")
 
 
 def not_in_original(text, name="paste-not-proofread"):
@@ -319,6 +322,7 @@ CASES = [
         "files": {"README.md": README},
         "graders": [
             reply_has(r"安装", "substitute-taught"),
+            replaced_in_fix("installation"),
             keeps_in_fix("README", "keep-english"),
             file_has("README.md", r"安装|install", flags="i"),
         ],
@@ -331,6 +335,7 @@ CASES = [
         "files": {"utils.py": SHORT_VAR_UTILS},
         # Models rewrite the whole file with Write as often as they use Edit.
         "graders": [reply_has(r"变量", "substitute-taught"),
+                    replaced_in_fix("variable"),
                     file_lacks("utils.py", r"^\s+s = ", flags="m")],
     },
     {
@@ -341,6 +346,7 @@ CASES = [
         "files": {"utils.py": UTILS},
         "graders": [
             reply_has(r"边界|边缘", "substitute-taught"),
+            replaced_in_fix("edge case"),
             reply_has(r"빈 (리스트|목록)|\[\]|ZeroDivision|0으로", "work-answer"),
         ],
     },
@@ -350,23 +356,41 @@ CASES = [
         "prompt": "帮我把greet函数的output改成中文",
         "expect": "output → 输出",
         "files": {"utils.py": UTILS},
-        "graders": [reply_has(r"输出", "substitute-taught"), file_has("utils.py", r"你好")],
+        "graders": [reply_has(r"输出", "substitute-taught"),
+                    replaced_in_fix("output"), file_has("utils.py", r"你好")],
     },
-    # --- English words Chinese developers keep in English (9-4) ---
+    # --- English words left as they are (9-4) ---
+    # Only bug is kept as a word Chinese has adopted from English. fix and
+    # commit have Chinese words, so they are replaced like any substitute.
     {
-        "name": "note-keep-bug",
-        "kind": "note",
+        "name": "fix-substitute-fix-keep-bug",
+        "kind": "fix",
         "prompt": "帮我fix一下utils.py里的bug",
+        "expect": "fix → 修 (bug는 유지)",
         "files": {"utils.py": UTILS},
         "graders": [
             AVERAGE_FIXED,
+            reply_has(r"修", "substitute-taught"),
+            replaced_in_fix("fix"),
             keeps_in_fix("bug", "keep-english"),
             reply_lacks(r"bug[는은] 중국어로", "keep-english-no-note"),
         ],
     },
     {
-        "name": "note-keep-api-json",
-        "kind": "note",
+        "name": "fix-substitute-commit",
+        "kind": "fix",
+        "prompt": "根据changes.txt帮我写一个commit message。",
+        "expect": "commit message → 提交信息",
+        "files": {"changes.txt": CHANGES},
+        "graders": [
+            reply_has(r"average", "work-answer"),
+            reply_has(r"提交", "substitute-taught"),
+            replaced_in_fix("commit"),
+        ],
+    },
+    {
+        "name": "ok-keep-api-json",
+        "kind": "ok",
         "prompt": "这个API返回的JSON格式不对，帮我看看api.py里的parse_user函数。",
         "files": {"api.py": API},
         "graders": [
@@ -376,18 +400,8 @@ CASES = [
         ],
     },
     {
-        "name": "note-keep-commit",
-        "kind": "note",
-        "prompt": "根据changes.txt帮我写一个commit message。",
-        "files": {"changes.txt": CHANGES},
-        "graders": [
-            reply_has(r"average", "work-answer"),
-            keeps_in_fix("commit", "keep-english"),
-        ],
-    },
-    {
-        "name": "note-keep-pr",
-        "kind": "note",
+        "name": "ok-keep-pr",
+        "kind": "ok",
         "prompt": "帮我在README里加一条PR的规则：每个PR都要有测试。",
         "files": {"README.md": README},
         "graders": [
