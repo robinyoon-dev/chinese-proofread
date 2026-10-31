@@ -8,7 +8,7 @@ Claude Code로 개발하면서 중국어를 배우는 한국어 사용자를 대
 
 판별과 교정을 어떻게 설계하고 평가했는지는 [설계와 평가](#설계와-평가)에 정리했습니다.
 
-<img src="docs/images/readme-hero.png" width="880" alt="중국어 요청 让这个function跑的更快를 받은 Claude가 교정된 의미대로 함수를 최적화한 뒤, 최종 답변의 맨 앞에서 문장을 让这个函数跑得更快로 교정하고 function은 函数(hánshù)로, 的는 得로 고친 이유를 설명하는 흐름">
+<img src="docs/images/readme-hero.png" width="880" alt="중국어 요청 让这个function跑的更快를 받은 Claude가 작업 전에 문장을 让这个函数跑得更快로 교정하고 function은 函数(hánshù)로, 的는 得로 고친 이유를 설명한 뒤, 교정된 의미대로 함수를 최적화하는 흐름">
 
 ## 교정 결과 예시
 
