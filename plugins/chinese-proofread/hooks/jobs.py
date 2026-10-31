@@ -15,6 +15,8 @@ import uuid
 # Keep the parent folder in sync with STATE_PATH in scripts/toggle.py.
 JOBS_DIR = os.path.expanduser("~/.claude/chinese-proofread/jobs")
 BLOCK = "📝 中文校对"
+# In the session's folder: the language the current turn must reply in.
+REPLY_FILE = "reply-language"
 # Set for the claude -p of the worker, so it never starts another job.
 INTERNAL_ENV = "CHINESE_PROOFREAD_INTERNAL"
 WORKER_TIMEOUT = 60

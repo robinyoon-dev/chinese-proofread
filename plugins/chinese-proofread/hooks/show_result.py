@@ -13,18 +13,31 @@ shown in the next turn. An interrupted turn runs no Stop hook; the same applies.
 Prints every finished job, so a result left over from an earlier turn is shown
 first. Parallel tool calls run this hook at the same time, so a job belongs to
 the process that manages to rename it.
+
+The reply language is an instruction Claude does not always follow, however it
+is worded, so at the end of the turn this hook also reads the final reply. If
+it is mostly Chinese the turn goes on once to rewrite it. Removing the expected
+language first means a turn is rewritten at most once.
 """
 
 import json
 import os
+import re
 import sys
 import time
 
-from jobs import BLOCK, STALE_SECONDS, jobs, session_dir
+from jobs import REPLY_FILE, STALE_SECONDS, jobs, session_dir
 
 # Keep below the Stop timeout in hooks.json.
 STOP_WAIT_SECONDS = 20
 FAILED = "⚠️ 中文校对: proofreading failed ({})"
+MIN_REPLY_HANZI = 10
+REWRITE = (
+    "Your last reply is in Chinese, but this user reads replies in {language}. "
+    "Write that reply again in {language}, without tools and without "
+    "mentioning this note. Leave out any version in Chinese. If the user asked "
+    "for that text in Chinese, say nothing more."
+)
 
 
 def claim(path):
@@ -78,6 +91,36 @@ def wait_for_jobs(folder):
         time.sleep(0.1)
 
 
+def mostly_chinese(reply):
+    # Code and quoted text in backticks may be in any language. The whole reply
+    # counts, because a long reply may quote a Chinese sentence; a word stands
+    # for a Latin run so that an English gloss does not hide a Chinese reply.
+    # Kana rule out Chinese, as in is_chinese().
+    text = re.sub(r"```.*?```|`[^`\n]*`", "", reply, flags=re.S)
+    if re.search(r"[\u3040-\u30ff]", text):
+        return False
+    hanzi = len(re.findall(r"[\u4e00-\u9fff]", text))
+    others = len(re.findall(r"[\uac00-\ud7a3]|[A-Za-z]+", text))
+    return hanzi >= MIN_REPLY_HANZI and hanzi > others
+
+
+def reply_to_rewrite(folder, data):
+    """Returns the expected language if the final reply came out in Chinese."""
+    mine = claim(os.path.join(folder, REPLY_FILE))
+    if mine is None:
+        return None
+    try:
+        with open(mine, encoding="utf-8") as f:
+            language = json.load(f)["language"]
+        os.remove(mine)
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    reply = data.get("last_assistant_message")
+    if isinstance(reply, str) and mostly_chinese(reply):
+        return language
+    return None
+
+
 def main():
     try:
         data = json.load(sys.stdin)
@@ -93,8 +136,16 @@ def main():
     messages += [read_dead_job(path) for path in jobs(folder, ".running")
                  if dead(path)]
     messages = [message for message in messages if message]
+    output = {}
     if messages:
-        json.dump({"systemMessage": "\n\n".join(messages)}, sys.stdout)
+        output["systemMessage"] = "\n\n".join(messages)
+    if data.get("hook_event_name") == "Stop":
+        language = reply_to_rewrite(folder, data)
+        if language:
+            output["decision"] = "block"
+            output["reason"] = REWRITE.format(language=language)
+    if output:
+        json.dump(output, sys.stdout)
 
 
 if __name__ == "__main__":

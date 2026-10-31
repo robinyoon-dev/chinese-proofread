@@ -14,6 +14,7 @@ Usage: proofread_worker.py <job>.running
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -21,6 +22,10 @@ from jobs import BLOCK, INTERNAL_ENV, WORKER_TIMEOUT, write_json
 
 MODEL = "sonnet"
 NOTHING_TO_PROOFREAD = "NONE"
+# The label is part of the Korean template and the model does not translate it
+# reliably, so it is dropped for other languages. The lines below it still read
+# as explanations.
+KOREAN_LABEL = re.compile(r"^설명:[ \t]*\n", re.M)
 PROMPT_FILE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "prompts", "proofread.md",
@@ -54,6 +59,12 @@ def parse_output(output):
     return output
 
 
+def fit_language(block, lang):
+    if block is None or lang.strip().lower() in ("korean", "한국어"):
+        return block
+    return KOREAN_LABEL.sub("", block)
+
+
 def proofread(prompt, lang, model=MODEL, cwd=None):
     """Returns the block, None if there is nothing to proofread, or raises
     RuntimeError with the reason."""
@@ -71,7 +82,7 @@ def proofread(prompt, lang, model=MODEL, cwd=None):
         raise RuntimeError(f"timed out after {WORKER_TIMEOUT}s")
     if result.returncode != 0:
         raise RuntimeError(f"claude exited with {result.returncode}")
-    return parse_output(result.stdout)
+    return fit_language(parse_output(result.stdout), lang)
 
 
 def main():

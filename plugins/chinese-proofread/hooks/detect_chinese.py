@@ -15,7 +15,8 @@ Does nothing while proofreading is turned off with the toggle skill.
 
 For a Chinese prompt it starts proofread_worker.py as a separate process, so
 the work does not wait for the proofreading and cannot skip it, and tells
-Claude to leave the proofreading alone. show_result.py shows the result.
+Claude to leave the proofreading alone. show_result.py shows the result, and
+makes Claude rewrite a final reply that came out in Chinese anyway.
 
 Env:
   CHINESE_PROOFREAD_ENABLED      set to 0 to keep proofreading off
@@ -37,7 +38,8 @@ import os
 import subprocess
 import sys
 
-from jobs import INTERNAL_ENV, new_job, session_dir, sweep, write_json
+from jobs import (INTERNAL_ENV, REPLY_FILE, new_job, session_dir, sweep,
+                  write_json)
 
 # Keep in sync with STATE_PATH in scripts/toggle.py.
 STATE_PATH = os.path.expanduser("~/.claude/chinese-proofread/state.json")
@@ -90,6 +92,35 @@ def start_proofreading(session_id, prompt, lang):
             os.remove(running)
         except OSError:
             pass
+
+
+def expect_reply_language(session_id, prompt, lang):
+    # Without this a turn inherits the check of an interrupted earlier turn.
+    folder = session_dir(session_id)
+    if folder is None:
+        return
+    path = os.path.join(folder, REPLY_FILE)
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+    if lang is None or "中文" in prompt or "汉语" in prompt:
+        return
+    try:
+        os.makedirs(folder, mode=0o700, exist_ok=True)
+        write_json(path, {"language": lang})
+    except OSError:
+        pass
+
+
+def reply_language(lang):
+    # None when a reply in Chinese is what the user configured.
+    chat_lang = os.environ.get("CHINESE_PROOFREAD_CHAT_LANG", "").strip()
+    name = chat_lang or lang
+    if name.lower() == "prompt" or "chinese" in name.lower() or count(
+            name, (0x4E00, 0x9FFF)):
+        return None
+    return name
 
 
 def chat_language(lang):
@@ -159,7 +190,10 @@ def main():
     hanzi_ratio = env_number("CHINESE_PROOFREAD_HANZI_RATIO", 0.0, float)
     lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
 
-    if not is_chinese(prompt, min_hanzi, min_hanzi_mixed, hanzi_ratio):
+    chinese = is_chinese(prompt, min_hanzi, min_hanzi_mixed, hanzi_ratio)
+    expect_reply_language(data.get("session_id"), prompt,
+                          reply_language(lang) if chinese else None)
+    if not chinese:
         return
     start_proofreading(data.get("session_id"), prompt, lang)
 
