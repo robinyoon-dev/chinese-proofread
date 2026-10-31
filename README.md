@@ -6,7 +6,7 @@ Claude Code로 개발하면서 중국어를 배우는 한국어 사용자를 대
 
 판별과 교정을 어떻게 설계하고 평가했는지는 [설계와 평가](#설계와-평가)에 정리했습니다.
 
-<img src="docs/images/readme-hero.png" width="880" alt="중국어 요청 让这个function跑的更快를 입력하면 Claude가 쓴 문장 그대로 요청을 수행하는 동시에, 별도의 교정 에이전트가 문장을 让这个函数跑得更快로 교정하여 function은 函数(hánshù)로, 的는 得로 고친 이유를 끝나는 대로 표시하는 흐름">
+<img src="docs/images/readme-hero.png" width="880" alt="중국어 요청 让这个function跑的更快가 Claude의 요청 수행과 교정 에이전트의 문장 교정으로 나뉘어 동시에 진행되고, Claude가 작업을 이어 가는 도중에 让这个函数跑得更快로 고친 교정 결과와 설명이 표시되는 흐름">
 
 ## 시작하기
 
