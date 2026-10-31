@@ -278,3 +278,7 @@ python3 -m unittest discover -s tests
 ```
 
 `main` 브랜치에 push하거나 pull request를 열면 GitHub Actions가 Python 3.9와 3.14에서 같은 테스트를 실행합니다.
+
+## 라이선스
+
+[MIT License](LICENSE)로 배포합니다.
