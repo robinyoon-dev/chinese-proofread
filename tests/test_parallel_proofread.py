@@ -82,9 +82,9 @@ class Base(unittest.TestCase):
 
 
 class WorkerTest(Base):
-    def run_worker(self, **env):
+    def run_worker(self, lang="Korean", **env):
         running = self.write_job(
-            "1.running", {"prompt": "让他更快", "lang": "Korean"})
+            "1.running", {"prompt": "让他更快", "lang": lang})
         self.run_script(WORKER, args=[running], **env)
 
     def result(self):
@@ -95,6 +95,18 @@ class WorkerTest(Base):
         self.run_worker()
         self.assertEqual(self.result(), {"block": BLOCK})
         self.assertEqual(self.files(), ["1.json"])
+
+    def test_label_stays_for_korean(self):
+        block = "📝 中文校对\n修正: 让它更快\n설명:\n- 사물은 它입니다.\n---"
+        self.run_worker(FAKE_OUTPUT=block)
+        self.assertEqual(self.result(), {"block": block})
+
+    def test_label_is_dropped_for_other_languages(self):
+        self.run_worker(
+            lang="English",
+            FAKE_OUTPUT="📝 中文校对\n修正: 让它更快\n설명:\n- Use 它.\n---")
+        self.assertEqual(
+            self.result(), {"block": "📝 中文校对\n修正: 让它更快\n- Use 它.\n---"})
 
     def test_nothing_to_proofread_leaves_no_result(self):
         self.run_worker(FAKE_OUTPUT="NONE\n")
@@ -177,6 +189,37 @@ class DetectStartsJobTest(Base):
         self.submit("帮我重构一下这个函数", CHINESE_PROOFREAD_INTERNAL="1")
         self.assertEqual(self.files(), [])
 
+    def expected_language(self):
+        try:
+            with open(os.path.join(self.folder, jobs.REPLY_FILE),
+                      encoding="utf-8") as f:
+                return json.load(f)["language"]
+        except OSError:
+            return None
+
+    def test_expected_reply_language(self):
+        cases = [
+            ({}, "Korean"),
+            ({"CHINESE_PROOFREAD_LANG": "English"}, "English"),
+            ({"CHINESE_PROOFREAD_CHAT_LANG": "Japanese"}, "Japanese"),
+            ({"CHINESE_PROOFREAD_CHAT_LANG": "prompt"}, None),
+            ({"CHINESE_PROOFREAD_CHAT_LANG": "Simplified Chinese"}, None),
+            ({"CHINESE_PROOFREAD_LANG": "中文"}, None),
+        ]
+        for env, language in cases:
+            with self.subTest(env=env):
+                self.submit("帮我重构一下这个函数", **env)
+                self.assertEqual(self.expected_language(), language)
+
+    def test_no_expected_language_when_the_prompt_names_chinese(self):
+        self.submit("请用中文解释一下这个函数")
+        self.assertIsNone(self.expected_language())
+
+    def test_a_later_prompt_clears_the_expected_language(self):
+        self.submit("帮我重构一下这个函数")
+        self.submit("이 함수를 리팩터링해 줘")
+        self.assertIsNone(self.expected_language())
+
 
 class ShowResultTest(Base):
     def show(self, event="PostToolUse"):
@@ -238,6 +281,53 @@ class ShowResultTest(Base):
         path = self.write_job("1.json", {"block": BLOCK})
         self.assertIsNotNone(show_result.claim(path))
         self.assertIsNone(show_result.claim(path))
+
+    def stop_with_reply(self, reply):
+        self.write_job(jobs.REPLY_FILE, {"language": "Korean"})
+        output = self.run_script(SHOW, json.dumps({
+            "session_id": SESSION, "hook_event_name": "Stop",
+            "last_assistant_message": reply}))
+        return json.loads(output) if output else None
+
+    def test_chinese_reply_is_rewritten_once(self):
+        output = self.stop_with_reply("递归就是函数不断调用自己来解决问题。")
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("in Korean", output["reason"])
+        self.assertEqual(self.files(), [])
+        self.assertEqual(self.run_script(SHOW, json.dumps({
+            "session_id": SESSION, "hook_event_name": "Stop",
+            "last_assistant_message": "递归就是函数不断调用自己来解决问题。"})), "")
+
+    def test_rewrite_keeps_the_result(self):
+        self.write_job("1.json", {"block": BLOCK})
+        output = self.stop_with_reply("递归就是函数不断调用自己来解决问题。")
+        self.assertEqual(output["systemMessage"], BLOCK)
+        self.assertEqual(output["decision"], "block")
+
+    def test_chinese_followed_by_english_is_rewritten(self):
+        self.assertIn("reason", self.stop_with_reply(
+            "递归就是函数不断调用自己来解决问题。\n\n(In English: Recursion is "
+            "when a function calls itself.)"))
+
+    def test_other_replies_are_left_alone(self):
+        replies = {
+            "korean": "재귀(递归)는 함수가 자기 자신을 호출하는 방식입니다.",
+            "english": "Recursion (递归) is a function calling itself.",
+            "fence": "주석을 추가했습니다.\n```python\n# 这个函数用来计算两个数字的平均值\n```",
+            "backticks": "`这个函数用来计算两个数字的平均值`를 넣었습니다.",
+            "quoted sentence": "재귀는 함수가 자기 자신을 호출해서 문제를 작게 나누어 "
+                               "푸는 방법입니다.\n"
+                               "중국어로는 递归就是自己调用自己直到遇到终止条件입니다.",
+            "japanese": "再帰処理は関数が自分自身を呼び出して問題を解決する方法です。",
+        }
+        for name, reply in replies.items():
+            with self.subTest(name):
+                self.assertIsNone(self.stop_with_reply(reply))
+
+    def test_tool_hook_leaves_the_expected_language(self):
+        self.write_job(jobs.REPLY_FILE, {"language": "Korean"})
+        self.show()
+        self.assertEqual(self.files(), [jobs.REPLY_FILE])
 
     def test_invalid_input(self):
         for stdin in ["", "not json", "[]", "{}", '{"session_id": "../x"}']:
