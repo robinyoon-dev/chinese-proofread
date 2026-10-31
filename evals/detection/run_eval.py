@@ -34,7 +34,7 @@ sys.path.insert(0, os.path.join(ROOT, "plugins", "chinese-proofread", "hooks"))
 from detect_chinese import is_chinese  # noqa: E402
 
 DATASET = os.path.join(HERE, "dataset.jsonl")
-DEFAULTS = (4, 1, 0.5)
+DEFAULTS = (4, 1, 0.0)
 POSITIVE = {"current": {"sentence"}, "word": {"sentence", "word"}}
 # Prompts the hook is designed to catch (design decisions 2 and 10).
 MUST_CATCH = {"zh_pure", "zh_traditional", "zh_with_code", "zh_english_substitute"}
