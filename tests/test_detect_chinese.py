@@ -118,17 +118,36 @@ class HookTest(unittest.TestCase):
     def test_chinese_prompt(self):
         output = json.loads(self.run_prompt("帮我重构一下这个函数"))["hookSpecificOutput"]
         self.assertEqual(output["hookEventName"], "UserPromptSubmit")
-        self.assertIn("chinese-proofread:proofread", output["additionalContext"])
+        self.assertIn("do not proofread", output["additionalContext"])
         self.assertIn("in Korean", output["additionalContext"])
 
     def test_lang(self):
         output = self.run_prompt("帮我重构一下这个函数", CHINESE_PROOFREAD_LANG="English")
         self.assertIn("in English", output)
 
+    def test_quoted_chinese_keeps_the_usual_reply_language(self):
+        # Design decision 15: without Chinese of the user's own the plugin
+        # stays out of the reply, language included.
+        output = self.run_prompt("帮我重构一下这个函数")
+        self.assertIn("only quoted, pasted", output)
+        self.assertIn("the language of the user's own words", output)
+
+    def test_chinese_request_is_not_a_request_for_chinese(self):
+        self.assertIn("practicing Chinese", self.chat_context())
+        self.assertNotIn(
+            "practicing Chinese",
+            self.chat_context(CHINESE_PROOFREAD_CHAT_LANG="prompt"),
+        )
+
+    def test_internal_run_does_nothing(self):
+        self.assertEqual(
+            self.run_prompt("帮我重构一下这个函数", CHINESE_PROOFREAD_INTERNAL="1"), ""
+        )
+
     def chat_context(self, **env):
         output = json.loads(self.run_prompt("帮我重构一下这个函数", **env))
         context = output["hookSpecificOutput"]["additionalContext"]
-        return context.split("When you print the proofreading block, outside it", 1)[1]
+        return context.split("the reply language rule applies:", 1)[1]
 
     def test_chat_lang_default(self):
         self.assertIn("user in Korean", self.chat_context())
@@ -202,34 +221,15 @@ class HookTest(unittest.TestCase):
         self.write_state("not json")
         self.assertNotEqual(self.run_prompt("帮我重构一下这个函数"), "")
 
-    def pending(self, session_id):
-        path = os.path.join(self.home, ".claude", "chinese-proofread", "pending", session_id)
-        try:
-            with open(path, encoding="utf-8") as f:
-                return f.read()
-        except FileNotFoundError:
-            return None
-
-    def run_session_prompt(self, prompt, session_id="s-1", prompt_id="p-1"):
-        return self.run_hook(json.dumps(
-            {"prompt": prompt, "session_id": session_id, "prompt_id": prompt_id}
-        ))
-
-    def test_chinese_prompt_leaves_pending_file(self):
-        self.run_session_prompt("帮我重构一下这个函数")
-        self.assertEqual(self.pending("s-1"), "p-1")
-
-    def test_other_prompt_clears_pending_file(self):
-        self.run_session_prompt("帮我重构一下这个函数")
-        self.run_session_prompt("이 함수를 리팩터링해 줘", prompt_id="p-2")
-        self.assertIsNone(self.pending("s-1"))
+    def run_session_prompt(self, prompt, session_id):
+        return self.run_hook(json.dumps({"prompt": prompt, "session_id": session_id}))
 
     def test_unsafe_session_id_is_ignored(self):
         self.assertNotEqual(
-            self.run_session_prompt("帮我重构一下这个函数", session_id="../state.json"), ""
+            self.run_session_prompt("帮我重构一下这个函数", "../state.json"), ""
         )
         self.assertFalse(os.path.exists(
-            os.path.join(self.home, ".claude", "chinese-proofread", "state.json")
+            os.path.join(self.home, ".claude", "chinese-proofread")
         ))
 
 

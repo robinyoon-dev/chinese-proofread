@@ -10,13 +10,24 @@
         ]
       }
     ],
-    "PreToolUse": [
+    "PostToolUse": [
       {
         "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/require_block_first.py\""
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/show_result.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/show_result.py\""
           }
         ]
       }
@@ -26,7 +37,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/continue_after_block.py\""
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/show_result.py\"",
+            "timeout": 25
           }
         ]
       }
