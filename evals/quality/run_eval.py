@@ -59,6 +59,8 @@ METRICS = {
     "tone": "구어체 유지",
     "ask": "먼저 확인",
     "skip": "교정 블록 생략",
+    "explain": "설명 언어 (#2)",
+    "chat": "대화 응답 언어 (#2)",
     "diag": "진단용 (점수 해석에만 사용)",
 }
 
@@ -79,11 +81,39 @@ SAME_AS_ORIGINAL = regex("overfix-not-same", r"^原文: ?(.+?)\s*\n修正: ?\1\s
                          "not_contains", "m")
 PINYIN_NOT_NUMERIC = regex(
     "pinyin-not-numeric", r"\([a-zü]+[1-5](?: [a-zü]+[1-5])*\)", "not_contains")
+# #2: the block explains in CHINESE_PROOFREAD_LANG and the rest of the reply
+# is in CHINESE_PROOFREAD_CHAT_LANG. The eval runs with both unset, so both
+# check for Korean.
+# An explanation line, word line, or ✅ line with no Hangul fails
+# explain-korean. It checks only what the block holds, so a reply without a
+# block is left out of its count instead of failing it.
+EXPLAIN = regex(
+    "explain-korean",
+    r"^설명:[ \t]*\n- (?![^\n]*[가-힣])"
+    r"|^- [\u4e00-\u9fff][^\n]*→(?![^\n]*[가-힣])"
+    r"|📝 中文校对: ✅(?![^\n]*[가-힣])", "not_contains", "m")
+# After the block's closing -{3} line or its ✅ line: a Korean sentence, and no
+# Chinese sentence outside a ``` fence. Explanations inside the block do not
+# count. A Chinese sentence is a run of hanzi without Hangul or backticks that
+# ends in 。？！, so Chinese quoted in backticks or a code fence (a comment
+# or README text the user asked for) is not one. Without the second check, a
+# Korean progress note followed by a Chinese reply passed. none cases get no
+# CHAT: without a block the plugin stays out of the reply, language included.
+FENCE_FREE = r"(?:(?!`{3})[\s\S])*"
+CHINESE_SENTENCE = (
+    r"[\u4e00-\u9fff][^\n`가-힣]*[。？！](?![`'\"」”])"
+    # An even number of fences left means the sentence is outside a fence.
+    r"(?=(?:" + FENCE_FREE + r"`{3}" + FENCE_FREE + r"`{3})*" + FENCE_FREE + r"$)")
+CHAT = regex(
+    "chat-korean",
+    r"(?:\n-{3}[ \t]*\n|📝 中文校对: ✅[^\n]*\n)"
+    r"(?![\s\S]*" + CHINESE_SENTENCE + r")"
+    r"[\s\S]*?[가-힣](?:니다|세요|어요|아요|해요|까요|게요|죠)[.?!]")
 DIAG = [
     {"name": "diag-skill-used", "type": "tool_used", "tool": "Skill",
      "input_match": r'"skill"\s*:\s*"(?:[\w-]+:)?proofread"', "min": 1},
-    # The block in any text block, not only the final one. A block that only
-    # shows up here was printed before the work instead of in the final reply.
+    # The block in any text block, not only the final one. The block is
+    # printed before the work, so it is usually not in the final reply.
     # The trace is JSON, so a leading newline appears as the two characters \n.
     regex("diag-block-in-text", r'"text":\s*"(?:\\n|\s)*📝 中文校对',
           target="trace"),
@@ -102,12 +132,16 @@ KIND_GRADERS = {
         PINYIN_NOT_NUMERIC,
         regex("pinyin-not-on-lines", f"^(原文|修正):.*[{TONE_MARKS}]",
               "not_contains", "m"),
+        EXPLAIN,
+        CHAT,
     ] + DIAG,
     "ok": [
         OK_FIRST,
         NO_ORIGINAL,
         regex("overfix-no-note", r"✅ 자연스럽습니다\.[^\n]*\n[ \t]*- ",
               "not_contains"),
+        EXPLAIN,
+        CHAT,
     ] + DIAG,
     # 9-5 trial: Chinese words mixed into Korean or English sentences.
     "word": [
@@ -117,9 +151,12 @@ KIND_GRADERS = {
         regex("format-end", r"^-{3}\s*$", flags="m"),
         regex("pinyin-present", f"[{TONE_MARKS}]"),
         PINYIN_NOT_NUMERIC,
+        EXPLAIN,
+        CHAT,
     ] + DIAG,
     "ask": [regex("format-block-first", r"^\s*📝 中文校对"),
-            SAME_AS_ORIGINAL] + DIAG,
+            SAME_AS_ORIGINAL,
+            EXPLAIN, CHAT] + DIAG,
     "none": [
         regex("skip-no-block", r"📝|中文校对", "not_contains"),
         regex("skip-no-mention", r"교정|校对|proofread", "not_contains", "i"),
@@ -229,7 +266,8 @@ def summarize(result_path):
     # A grader that checks something is absent from the block (no pinyin on
     # the 原文 line, no punctuation note, ...) passes trivially when there is
     # no block, so a run without a block is left out of its count. none cases
-    # are the exception: having no block is what they check.
+    # are the exception: having no block is what they check. chat graders look
+    # after the block, so a run without one is left out of them too.
     #
     # A grader since removed from cases.py is not counted, so an earlier
     # result can be summarized again after a grader turns out to be wrong.
@@ -269,7 +307,8 @@ def summarize(result_path):
                             config["config"].get("target", "last_message")
                             == "last_message")
                 needs_block = (on_reply and kind != "none" and
-                               config["config"]["match"] == "not_contains")
+                               (config["config"]["match"] == "not_contains"
+                                or metric == "chat"))
                 verdicts = {"any": grader["passed"], "final": grader["passed"]}
                 if on_reply and shown["any"] is not None:
                     verdicts["any"] = regrade(config["config"], shown["any"])

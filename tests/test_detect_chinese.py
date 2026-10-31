@@ -125,6 +125,32 @@ class HookTest(unittest.TestCase):
         output = self.run_prompt("帮我重构一下这个函数", CHINESE_PROOFREAD_LANG="English")
         self.assertIn("in English", output)
 
+    def chat_context(self, **env):
+        output = json.loads(self.run_prompt("帮我重构一下这个函数", **env))
+        context = output["hookSpecificOutput"]["additionalContext"]
+        return context.split("When you print the proofreading block, outside it", 1)[1]
+
+    def test_chat_lang_default(self):
+        self.assertIn("user in Korean", self.chat_context())
+        self.assertIn(
+            "user in English", self.chat_context(CHINESE_PROOFREAD_LANG="English")
+        )
+        self.assertIn(
+            "user in Korean", self.chat_context(CHINESE_PROOFREAD_CHAT_LANG=" ")
+        )
+
+    def test_chat_lang_prompt(self):
+        for value in ["prompt", "Prompt"]:
+            self.assertIn(
+                "the language the user wrote the request in",
+                self.chat_context(CHINESE_PROOFREAD_CHAT_LANG=value),
+            )
+
+    def test_chat_lang_name(self):
+        context = self.chat_context(CHINESE_PROOFREAD_CHAT_LANG="Chinese")
+        self.assertIn("user in Chinese", context)
+        self.assertIn("commit messages", context)
+
     def test_not_chinese_prompt(self):
         self.assertEqual(self.run_prompt("이 함수를 리팩터링해 줘"), "")
 
@@ -175,6 +201,36 @@ class HookTest(unittest.TestCase):
     def test_broken_state_file_counts_as_enabled(self):
         self.write_state("not json")
         self.assertNotEqual(self.run_prompt("帮我重构一下这个函数"), "")
+
+    def pending(self, session_id):
+        path = os.path.join(self.home, ".claude", "chinese-proofread", "pending", session_id)
+        try:
+            with open(path, encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError:
+            return None
+
+    def run_session_prompt(self, prompt, session_id="s-1", prompt_id="p-1"):
+        return self.run_hook(json.dumps(
+            {"prompt": prompt, "session_id": session_id, "prompt_id": prompt_id}
+        ))
+
+    def test_chinese_prompt_leaves_pending_file(self):
+        self.run_session_prompt("帮我重构一下这个函数")
+        self.assertEqual(self.pending("s-1"), "p-1")
+
+    def test_other_prompt_clears_pending_file(self):
+        self.run_session_prompt("帮我重构一下这个函数")
+        self.run_session_prompt("이 함수를 리팩터링해 줘", prompt_id="p-2")
+        self.assertIsNone(self.pending("s-1"))
+
+    def test_unsafe_session_id_is_ignored(self):
+        self.assertNotEqual(
+            self.run_session_prompt("帮我重构一下这个函数", session_id="../state.json"), ""
+        )
+        self.assertFalse(os.path.exists(
+            os.path.join(self.home, ".claude", "chinese-proofread", "state.json")
+        ))
 
 
 if __name__ == "__main__":

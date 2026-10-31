@@ -12,6 +12,6 @@ allowed-tools: Bash(python3:*)
 
 !`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/toggle.py $ARGUMENTS`
 
-- 이 결과를 사용자에게 한두 문장으로 전달합니다. 전달할 때는 결과의 `Reply language` 줄에 적힌 언어를 쓰고, 그 줄은 사용자에게 보여 주지 않습니다.
+- 이 결과를 사용자에게 한두 문장으로 전달합니다. 전달할 때는 결과의 `Chat reply language` 줄에 적힌 언어를 쓰고, 그 줄이 `same as the prompt`라면 사용자가 이 대화에서 쓰는 언어를 씁니다. `Explanation language` 줄과 `Chat reply language` 줄은 사용자에게 보여 주지 않습니다.
 - 상태는 이미 바뀌었으므로 도구를 호출하지 않습니다.
 - 결과에 사용법이 출력되었다면, 사용할 수 있는 인자가 `on`, `off`, `status`이고 인자를 생략하면 상태가 반대로 바뀐다는 점을 알려 줍니다.
