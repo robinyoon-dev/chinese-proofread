@@ -6,7 +6,7 @@
 
 - **날짜**: 2026-10-29
 - **대상 커밋**: 실행할 때의 `SKILL.md`는 `776f0f1`의 `SKILL.md`와 같습니다. 그 뒤의 `d679f85`에서는 다른 교정과 함께 쓰는 문장부호 설명을 허용하는 한 줄만 바뀌었으며, 아래 개선 사항은 `d679f85`의 `SKILL.md`를 기준으로 검토했습니다.
-- **실행 결과**: `evals/quality/results/20261029-165121-sonnet/`의 `replies.md`와 `result.json`입니다. 실행 환경과 수치는 `docs/eval-6-3-output-position.md`에 기록했습니다.
+- **실행 결과**: `evals/quality/results/20261029-165121-sonnet/`의 `replies.md`와 `result.json`입니다. 실행 환경과 수치는 `docs/eval-6-3/output-position.md`에 기록했습니다.
 - **한계**: Sonnet으로 케이스마다 1회만 실행한 결과입니다. 출력 위치를 바꾼 뒤에 Opus는 아직 실행하지 않았으므로, Opus에서도 같은 문제가 나타나는지는 확인하지 못했습니다. 3번 항목만 수정 전 Opus 기준 점수(`docs/eval-results.md`)의 관찰을 함께 근거로 삼았습니다.
 
 이 실행에서 실패한 채점자는 다음과 같습니다.

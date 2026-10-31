@@ -14,7 +14,7 @@ copy, and runs the eval on the copy. Results land in results/, which is not
 committed; record the numbers in docs/eval-results.md instead.
 
 Bash cannot be granted on machines where ~/.docker holds a symbolic link
-(docs/eval-6-3-pilot.md), so the cases only need Read, Edit and Write.
+(docs/eval-6-3/pilot.md), so the cases only need Read, Edit and Write.
 
 Usage:
   python3 evals/quality/run_eval.py                        # sonnet, 1 run each
