@@ -9,7 +9,7 @@
       "name": "chinese-proofread",
       "source": "./plugins/chinese-proofread",
       "description": "Proofread Chinese prompts alongside the work · 중국어로 쓴 요청을 작업과 함께 교정합니다",
-      "version": "0.1.0"
+      "version": "1.0.0"
     }
   ]
 }
