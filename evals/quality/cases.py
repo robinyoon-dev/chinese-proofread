@@ -515,4 +515,20 @@ CASES = [
         "files": {"api.py": SLOW_API},
         "graders": [reply_has(r"sleep", "work-answer")],
     },
+    # Answers with no tools: the question being in Chinese pulled the reply
+    # into Chinese in interactive sessions (#18), and no case above caught it.
+    {
+        "name": "ok-qa-closure",
+        "kind": "ok",
+        "prompt": "什么是闭包？用一句话解释一下",
+        "files": {},
+        "graders": [reply_has(r"함수|변수", "work-answer")],
+    },
+    {
+        "name": "ok-qa-list-tuple",
+        "kind": "ok",
+        "prompt": "Python的列表和元组有什么区别，简单说一下",
+        "files": {},
+        "graders": [reply_has(r"튜플|tuple", "work-answer")],
+    },
 ]

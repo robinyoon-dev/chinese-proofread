@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Run the proofreading quality eval (TODO 6-3) with `claude plugin eval`.
+"""Score the work agent with `claude plugin eval` (TODO 6-3, #18).
+
+The proofreading runs in its own process, which run_worker_eval.py scores; the
+graders of that eval are also defined here. This eval checks that the work
+agent finishes the request in the right language and leaves the proofreading
+alone. The copy of the plugin gets a worker that does nothing, so a run does
+not pay for proofreading it does not score.
 
 `claude plugin eval` only reads cases from inside the plugin directory, and
 anything there would be installed along with the plugin. So this script copies
@@ -42,8 +48,8 @@ from detect_chinese import is_chinese  # noqa: E402
 
 ALLOWED_TOOLS = ["Read", "Edit", "Write", "Glob", "Grep", "Skill"]
 TONE_MARKS = "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ"
-BLOCK = "📝 中文校对"
 FILE_END = "__EVAL_FILE_END__"
+NO_WORKER = "import os, sys\nos.remove(sys.argv[1])\n"
 
 # Metric prefixes of grader names, in report order.
 METRICS = {
@@ -61,7 +67,6 @@ METRICS = {
     "skip": "교정 블록 생략",
     "explain": "설명 언어 (#2)",
     "chat": "대화 응답 언어 (#2)",
-    "diag": "진단용 (점수 해석에만 사용)",
 }
 
 
@@ -81,9 +86,8 @@ SAME_AS_ORIGINAL = regex("overfix-not-same", r"^原文: ?(.+?)\s*\n修正: ?\1\s
                          "not_contains", "m")
 PINYIN_NOT_NUMERIC = regex(
     "pinyin-not-numeric", r"\([a-zü]+[1-5](?: [a-zü]+[1-5])*\)", "not_contains")
-# #2: the block explains in CHINESE_PROOFREAD_LANG and the rest of the reply
-# is in CHINESE_PROOFREAD_CHAT_LANG. The eval runs with both unset, so both
-# check for Korean.
+# #2: the block explains in CHINESE_PROOFREAD_LANG. The eval runs with it
+# unset, so this checks for Korean.
 # An explanation line, word line, or ✅ line with no Hangul fails
 # explain-korean. It checks only what the block holds, so a reply without a
 # block is left out of its count instead of failing it.
@@ -92,31 +96,26 @@ EXPLAIN = regex(
     r"^설명:[ \t]*\n- (?![^\n]*[가-힣])"
     r"|^- [\u4e00-\u9fff][^\n]*→(?![^\n]*[가-힣])"
     r"|📝 中文校对: ✅(?![^\n]*[가-힣])", "not_contains", "m")
-# After the block's closing -{3} line or its ✅ line: a Korean sentence, and no
-# Chinese sentence outside a ``` fence. Explanations inside the block do not
-# count. A Chinese sentence is a run of hanzi without Hangul or backticks that
-# ends in 。？！, so Chinese quoted in backticks or a code fence (a comment
+# The work agent's reply: a Korean sentence, and no Chinese sentence outside a
+# ``` fence. A Chinese sentence is a run of hanzi without Hangul or backticks
+# that ends in 。？！, so Chinese quoted in backticks or a code fence (a comment
 # or README text the user asked for) is not one. Without the second check, a
-# Korean progress note followed by a Chinese reply passed. none cases get no
-# CHAT: without a block the plugin stays out of the reply, language included.
+# Korean progress note followed by a Chinese reply passed. Without Chinese of
+# the user's own the plugin stays out of the reply, so a prompt with no Hangul
+# gets CHAT_NO_KOREAN instead.
 FENCE_FREE = r"(?:(?!`{3})[\s\S])*"
 CHINESE_SENTENCE = (
     r"[\u4e00-\u9fff][^\n`가-힣]*[。？！](?![`'\"」”])"
     # An even number of fences left means the sentence is outside a fence.
     r"(?=(?:" + FENCE_FREE + r"`{3}" + FENCE_FREE + r"`{3})*" + FENCE_FREE + r"$)")
+KOREAN_SENTENCE = r"[가-힣](?:니다|세요|어요|아요|해요|까요|게요|죠)[.?!]"
 CHAT = regex(
     "chat-korean",
-    r"(?:\n-{3}[ \t]*\n|📝 中文校对: ✅[^\n]*\n)"
-    r"(?![\s\S]*" + CHINESE_SENTENCE + r")"
-    r"[\s\S]*?[가-힣](?:니다|세요|어요|아요|해요|까요|게요|죠)[.?!]")
-DIAG = [
-    {"name": "diag-skill-used", "type": "tool_used", "tool": "Skill",
-     "input_match": r'"skill"\s*:\s*"(?:[\w-]+:)?proofread"', "min": 1},
-    # The block in any text block, not only the final one. The block is
-    # printed before the work, so it is usually not in the final reply.
-    # The trace is JSON, so a leading newline appears as the two characters \n.
-    regex("diag-block-in-text", r'"text":\s*"(?:\\n|\s)*📝 中文校对',
-          target="trace"),
+    r"^(?![\s\S]*" + CHINESE_SENTENCE + r")[\s\S]*?" + KOREAN_SENTENCE)
+CHAT_NO_KOREAN = regex("chat-no-korean", KOREAN_SENTENCE, "not_contains")
+SKIP = [
+    regex("skip-no-block", r"📝|中文校对", "not_contains"),
+    regex("skip-no-mention", r"교정|校对|proofread", "not_contains", "i"),
 ]
 
 KIND_GRADERS = {
@@ -133,16 +132,14 @@ KIND_GRADERS = {
         regex("pinyin-not-on-lines", f"^(原文|修正):.*[{TONE_MARKS}]",
               "not_contains", "m"),
         EXPLAIN,
-        CHAT,
-    ] + DIAG,
+    ],
     "ok": [
         OK_FIRST,
         NO_ORIGINAL,
         regex("overfix-no-note", r"✅ 자연스럽습니다\.[^\n]*\n[ \t]*- ",
               "not_contains"),
         EXPLAIN,
-        CHAT,
-    ] + DIAG,
+    ],
     # 9-5 trial: Chinese words mixed into Korean or English sentences.
     "word": [
         BLOCK_FIRST,
@@ -152,16 +149,23 @@ KIND_GRADERS = {
         regex("pinyin-present", f"[{TONE_MARKS}]"),
         PINYIN_NOT_NUMERIC,
         EXPLAIN,
-        CHAT,
-    ] + DIAG,
+    ],
     "ask": [regex("format-block-first", r"^\s*📝 中文校对"),
             SAME_AS_ORIGINAL,
-            EXPLAIN, CHAT] + DIAG,
-    "none": [
-        regex("skip-no-block", r"📝|中文校对", "not_contains"),
-        regex("skip-no-mention", r"교정|校对|proofread", "not_contains", "i"),
-    ],
+            EXPLAIN],
+    "none": SKIP,
 }
+
+
+def main_graders(case):
+    if case["kind"] != "none":
+        chat = [CHAT]
+    elif re.search("[가-힣]", case["prompt"]):
+        chat = []
+    else:
+        chat = [CHAT_NO_KOREAN]
+    return SKIP + chat + [g for g in case["graders"]
+                          if metric_of(g["name"]) in ("work", "ask")]
 
 
 def yaml_value(value, indent):
@@ -193,7 +197,7 @@ def write_case(case, evals_dir):
     with open(os.path.join(case_dir, "prompt.md"), "w", encoding="utf-8") as f:
         f.write(frontmatter(meta) + case["prompt"] + "\n")
 
-    graders = KIND_GRADERS[case["kind"]] + case["graders"]
+    graders = main_graders(case)
     names = [g["name"] for g in graders]
     for grader in graders:
         # Two graders of one metric in a case need distinct file names.
@@ -263,21 +267,12 @@ def summarize(result_path):
     # Graders on the reply are scored again on all text blocks (the main
     # number); eval's own verdict on the final message is kept alongside.
     #
-    # A grader that checks something is absent from the block (no pinyin on
-    # the 原文 line, no punctuation note, ...) passes trivially when there is
-    # no block, so a run without a block is left out of its count. none cases
-    # are the exception: having no block is what they check. chat graders look
-    # after the block, so a run without one is left out of them too.
-    #
     # A grader since removed from cases.py is not counted, so an earlier
     # result can be summarized again after a grader turns out to be wrong.
     with open(result_path, encoding="utf-8") as f:
         result = json.load(f)
     traces = os.path.join(os.path.dirname(result_path), "traces")
-    kinds = {c["name"]: c["kind"] for c in CASES}
-    current = {c["name"]: {g["name"]
-                           for g in KIND_GRADERS[c["kind"]] + c["graders"]}
-               for c in CASES}
+    current = {c["name"]: {g["name"] for g in main_graders(c)} for c in CASES}
 
     columns = {"any": defaultdict(lambda: [0, 0, 0]),
                "final": defaultdict(lambda: [0, 0, 0])}
@@ -286,7 +281,6 @@ def summarize(result_path):
     runs = 0
     for case in result["cases"]:
         configs = {g["name"]: g for g in case["graders"]}
-        kind = kinds.get(case["name"], metric_of(case["name"]))
         for i, run in enumerate(case["arms"]["with"], 1):
             runs += 1
             cost += run.get("costUsd", 0) + run.get("judgeCostUsd", 0)
@@ -306,17 +300,10 @@ def summarize(result_path):
                 on_reply = (config["type"] == "regex" and
                             config["config"].get("target", "last_message")
                             == "last_message")
-                needs_block = (on_reply and kind != "none" and
-                               (config["config"]["match"] == "not_contains"
-                                or metric == "chat"))
                 verdicts = {"any": grader["passed"], "final": grader["passed"]}
                 if on_reply and shown["any"] is not None:
                     verdicts["any"] = regrade(config["config"], shown["any"])
                 for column, counts in columns.items():
-                    text = shown[column]
-                    if needs_block and text is not None and BLOCK not in text:
-                        counts[metric][2] += 1
-                        continue
                     counts[metric][1] += 1
                     counts[metric][0] += verdicts[column]
                     if column == "any" and not verdicts[column]:
@@ -390,7 +377,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--model", default="sonnet")
     parser.add_argument("--runs", type=int, default=1)
-    parser.add_argument("--case", help="only cases whose name matches this glob")
+    parser.add_argument("--case", help="only cases whose name matches these comma-separated globs")
     parser.add_argument("--keep", action="store_true",
                         help="keep the temporary plugin copy")
     parser.add_argument("--summary", metavar="RESULT_JSON",
@@ -403,8 +390,8 @@ def main():
         summarize(args.summary)
         return
 
-    cases = [c for c in CASES
-             if not args.case or fnmatch.fnmatch(c["name"], args.case)]
+    cases = [c for c in CASES if not args.case or any(
+        fnmatch.fnmatch(c["name"], glob) for glob in args.case.split(","))]
     if not cases:
         sys.exit(f"no case matches {args.case}")
     check_cases(cases)
@@ -417,6 +404,9 @@ def main():
     try:
         shutil.copytree(PLUGIN, copy,
                         ignore=shutil.ignore_patterns("__pycache__", "evals"))
+        with open(os.path.join(copy, "hooks", "proofread_worker.py"), "w",
+                  encoding="utf-8") as f:
+            f.write(NO_WORKER)
         for case in cases:
             write_case(case, os.path.join(copy, "evals"))
 
