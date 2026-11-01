@@ -30,7 +30,8 @@ Env:
                                  minimum hanzi with Latin letters or Hangul
                                  (default: 1)
   CHINESE_PROOFREAD_HANZI_RATIO  minimum hanzi / (hanzi + Hangul) (default: 0)
-  CHINESE_PROOFREAD_INTERNAL     set for the proofreading process itself
+  CHINESE_PROOFREAD_HISTORY      set to 0 to keep corrections out of the history
+  CHINESE_PROOFREAD_INTERNAL    set for the proofreading process itself
 """
 
 import json

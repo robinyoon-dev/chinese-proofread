@@ -18,7 +18,7 @@ import re
 import subprocess
 import sys
 
-from jobs import BLOCK, INTERNAL_ENV, WORKER_TIMEOUT, write_json
+from jobs import BLOCK, INTERNAL_ENV, WORKER_TIMEOUT, append_history, write_json
 
 MODEL = "sonnet"
 NOTHING_TO_PROOFREAD = "NONE"
@@ -85,6 +85,14 @@ def proofread(prompt, lang, model=MODEL, cwd=None):
     return fit_language(parse_output(result.stdout), lang)
 
 
+def record(block, lang):
+    # The user still gets the result when the history cannot be written.
+    try:
+        append_history(block, lang)
+    except OSError:
+        pass
+
+
 def main():
     running = sys.argv[1]
     done = running[:-len(".running")] + ".json"
@@ -94,6 +102,7 @@ def main():
         block = proofread(job["prompt"], job["lang"], cwd=os.path.dirname(running))
         if block is not None:
             write_json(done, {"block": block})
+            record(block, job["lang"])
     except (RuntimeError, OSError, ValueError, KeyError) as e:
         write_json(done, {"error": str(e)})
     os.remove(running)

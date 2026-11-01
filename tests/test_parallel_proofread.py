@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import stat
@@ -111,6 +112,71 @@ class WorkerTest(Base):
     def test_nothing_to_proofread_leaves_no_result(self):
         self.run_worker(FAKE_OUTPUT="NONE\n")
         self.assertEqual(self.files(), [])
+
+    def history_path(self):
+        return os.path.join(
+            self.home, ".claude", "chinese-proofread", "history.jsonl")
+
+    def history(self):
+        with open(self.history_path(), encoding="utf-8") as f:
+            return [json.loads(line) for line in f]
+
+    def test_correction_is_recorded(self):
+        self.run_worker()
+        entry, = self.history()
+        self.assertEqual(entry["v"], 1)
+        self.assertEqual(entry["lang"], "Korean")
+        self.assertEqual(entry["block"], BLOCK)
+        self.assertIsNotNone(
+            datetime.datetime.fromisoformat(entry["time"]).tzinfo)
+
+    def test_history_is_private(self):
+        self.run_worker()
+        self.assertEqual(stat.S_IMODE(os.stat(self.history_path()).st_mode),
+                         0o600)
+
+    def test_history_leaves_the_prompt_out(self):
+        running = self.write_job(
+            "1.running", {"prompt": "秘密 token=abc", "lang": "Korean"})
+        self.run_script(WORKER, args=[running])
+        with open(self.history_path(), encoding="utf-8") as f:
+            self.assertNotIn("abc", f.read())
+
+    def test_corrections_add_up(self):
+        self.run_worker()
+        self.run_worker()
+        self.assertEqual(len(self.history()), 2)
+
+    def test_only_corrections_are_recorded(self):
+        for output in ("📝 中文校对: ✅ 자연스럽습니다.", "NONE\n", "好的。"):
+            self.run_worker(FAKE_OUTPUT=output)
+        self.run_worker(FAKE_EXIT="1")
+        self.assertFalse(os.path.exists(self.history_path()))
+
+    def test_history_can_be_turned_off(self):
+        self.run_worker(CHINESE_PROOFREAD_HISTORY="0")
+        self.assertEqual(self.result(), {"block": BLOCK})
+        self.assertFalse(os.path.exists(self.history_path()))
+
+    def test_history_failure_keeps_the_result(self):
+        os.makedirs(self.history_path())
+        self.run_worker()
+        self.assertEqual(self.result(), {"block": BLOCK})
+        self.assertEqual(self.files(), ["1.json"])
+
+    def test_parallel_workers_keep_lines_whole(self):
+        block = "📝 中文校对\n修正: " + "它" * 20000 + "\n---"
+        workers = [
+            subprocess.Popen(
+                [sys.executable, WORKER,
+                 self.write_job(f"{i}.running",
+                                {"prompt": "让他更快", "lang": "Korean"})],
+                env=dict(self.env, FAKE_OUTPUT=block))
+            for i in range(8)
+        ]
+        for worker in workers:
+            self.assertEqual(worker.wait(), 0)
+        self.assertEqual([e["block"] for e in self.history()], [block] * 8)
 
     def test_answering_the_prompt_is_a_failure(self):
         self.run_worker(FAKE_OUTPUT="好的，我来修改这个函数。")
