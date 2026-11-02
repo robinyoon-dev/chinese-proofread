@@ -38,6 +38,22 @@ REWRITE = (
     "mentioning this note. Leave out any version in Chinese. If the user asked "
     "for that text in Chinese, say nothing more."
 )
+# Claude Code greys out hook messages, and a hook cannot learn the terminal's
+# background, so one fixed pair must read on both themes. 22 lifts the dim that
+# dark-ansi adds, and 231 is white even where a palette redefines 97.
+STYLE = "\x1b[22;38;5;231;48;5;240m"
+RESET = "\x1b[0m"
+
+
+def styled(text):
+    # Claude Code keeps escape codes under NO_COLOR, so it is honoured here.
+    if os.environ.get("NO_COLOR"):
+        return text
+    lines = [f"{STYLE}{line}{RESET}" if line else line
+             for line in text.split("\n")]
+    # The blank line leaves "Stop says: " alone on the first line, so that
+    # every line of the block starts at the same column.
+    return "\n" + "\n".join(lines)
 
 
 def claim(path):
@@ -138,7 +154,7 @@ def main():
     messages = [message for message in messages if message]
     output = {}
     if messages:
-        output["systemMessage"] = "\n\n".join(messages)
+        output["systemMessage"] = styled("\n\n".join(messages))
     if data.get("hook_event_name") == "Stop":
         language = reply_to_rewrite(folder, data)
         if language:

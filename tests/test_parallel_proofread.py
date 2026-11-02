@@ -53,7 +53,9 @@ class Base(unittest.TestCase):
             k: v for k, v in os.environ.items()
             if not k.startswith("CHINESE_PROOFREAD_")
         }
+        # Most tests compare the text; StyleTest covers the colors.
         self.env.update(HOME=self.home, FAKE_LOG=self.log, FAKE_OUTPUT=BLOCK,
+                        NO_COLOR="1",
                         PATH=bin_dir + os.pathsep + self.env["PATH"])
         self.folder = os.path.join(
             self.home, ".claude", "chinese-proofread", "jobs", SESSION)
@@ -219,6 +221,34 @@ class DetectStartsJobTest(Base):
         self.submit("帮我重构一下这个函数")
         self.submit("이 함수를 리팩터링해 줘")
         self.assertIsNone(self.expected_language())
+
+
+class StyleTest(Base):
+    def show(self, **env):
+        output = self.run_script(SHOW, json.dumps(
+            {"session_id": SESSION, "hook_event_name": "PostToolUse"}), **env)
+        return json.loads(output)["systemMessage"]
+
+    def test_every_line_of_the_block_is_styled(self):
+        self.write_job("1.json", {"block": "first\nsecond"})
+        self.assertEqual(self.show(NO_COLOR=""), (
+            f"\n{show_result.STYLE}first{show_result.RESET}"
+            f"\n{show_result.STYLE}second{show_result.RESET}"))
+
+    def test_lines_between_results_stay_empty(self):
+        self.write_job("1.json", {"block": "first"})
+        self.write_job("2.json", {"block": "second"})
+        self.assertEqual(self.show(NO_COLOR=""), (
+            f"\n{show_result.STYLE}first{show_result.RESET}\n"
+            f"\n{show_result.STYLE}second{show_result.RESET}"))
+
+    def test_failure_is_styled(self):
+        self.write_job("1.json", {"error": "timed out after 60s"})
+        self.assertIn(show_result.STYLE, self.show(NO_COLOR=""))
+
+    def test_no_color_leaves_the_block_as_it_is(self):
+        self.write_job("1.json", {"block": BLOCK})
+        self.assertEqual(self.show(NO_COLOR="1"), BLOCK)
 
 
 class ShowResultTest(Base):
