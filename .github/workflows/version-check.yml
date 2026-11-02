@@ -1,0 +1,42 @@
+name: version-check
+
+# PRs into release/X.Y.Z branches are left out: they bump the version last.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - name: Require a version bump when plugins/ changes
+        run: |
+          plugin_json=plugins/chinese-proofread/.claude-plugin/plugin.json
+
+          # HEAD is the PR merged into main, so HEAD^1 is main.
+          if git diff --quiet HEAD^1 HEAD -- plugins/; then
+            echo "plugins/ is unchanged; no version bump needed."
+            exit 0
+          fi
+
+          base="$(git show "HEAD^1:$plugin_json" | jq -r .version)"
+          head="$(jq -r .version "$plugin_json")"
+
+          if ! [[ "$head" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error file=$plugin_json::version is not X.Y.Z: $head"
+            exit 1
+          fi
+
+          newest="$(printf '%s\n%s\n' "$base" "$head" | sort -V | tail -1)"
+          if [ "$head" = "$base" ] || [ "$head" != "$newest" ]; then
+            echo "::error file=$plugin_json::plugins/ changed, so raise the version above $base (now $head). See docs/development.md."
+            exit 1
+          fi
+
+          echo "Version raised: $base -> $head"
