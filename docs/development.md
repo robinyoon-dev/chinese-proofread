@@ -6,7 +6,7 @@
 
 1. `UserPromptSubmit` 훅이 입력된 프롬프트를 검사하여 중국어인지 판별합니다. 판별 기준은 [중국어 판별 기준](#중국어-판별-기준)에 정리했습니다.
 2. 중국어라고 판별되면, 훅은 교정 프로세스를 따로 실행하고 바로 끝납니다. Claude의 컨텍스트에는 교정하지 말라는 지시와 답변 언어만 추가합니다.
-3. 교정 프로세스는 `prompts/proofread.md`의 규칙에 따라 `claude -p`로 교정하고, 결과를 세션별 폴더에 저장합니다. 그동안 Claude는 원문을 기준으로 작업합니다.
+3. 교정 프로세스는 `prompts/proofread.md`의 규칙에 따라 `claude -p`로 교정하고, 결과를 세션별 폴더에 저장합니다. 고칠 부분이 있었다면 [교정 이력](configuration.md#교정-이력)에도 덧붙입니다. 그동안 Claude는 원문을 기준으로 작업합니다.
 4. `PostToolUse`, `PostToolUseFailure`, `Stop` 훅이 끝난 결과를 `systemMessage`로 한 번만 표시합니다.
 5. 답변이 끝났는데 교정이 실행 중이면 `Stop` 훅이 최대 20초 기다리고, 그래도 끝나지 않으면 다음 턴에 표시합니다. 교정이 실패하면 작업은 그대로 두고 실패 사실만 표시합니다.
 6. `Stop` 훅은 최종 답변이 대부분 중국어이면 턴을 한 번 이어 가게 하여, 지정한 언어로 다시 쓰게 합니다.
@@ -52,6 +52,8 @@ python3 -m unittest discover -s tests
 
 `main` 브랜치에 push하거나 pull request를 열면 GitHub Actions가 Python 3.9와 3.14에서 같은 테스트를 실행합니다.
 
+`main` 브랜치에 push하면 `release` 워크플로가 `plugin.json`의 버전을 읽습니다. 이 버전의 `vX.Y.Z` 태그가 아직 없으면 태그와 GitHub Release를 자동으로 만듭니다. 자동으로 생성된 Release 노트에는 PR 목록만 들어가므로, 사용자가 알아야 할 동작 변경은 생성된 Release에 직접 추가합니다.
+
 ## 버전 정책
 
 이 플러그인은 유의적 버전을 따르며, 코드 API가 아니라 사용자가 겪는 동작을 기준으로 버전을 올립니다.
@@ -69,6 +71,10 @@ python3 -m unittest discover -s tests
 - **기본값 변경:** 설정을 바꾸지 않아도 동작이 달라지므로, 비용이 늘거나 출력 언어가 바뀌는 등 사용자가 바로 체감하는 변경은 MAJOR로 올리고, 판별 기준을 다듬는 변경은 MINOR로 올립니다.
 - **프롬프트 수정:** `prompts/proofread.md`를 고쳐서 교정 범위가 눈에 띄게 달라지면 MINOR로 올립니다.
 
+`main`으로 가는 PR이 `plugins/` 아래의 파일을 바꾸면서 버전을 `main`보다 높이지 않으면 `version-check` 워크플로가 실패합니다. 올릴 자리는 사용자가 겪는 동작에 따라 사람이 판단해야 하므로, 이 워크플로는 버전을 대신 올리지 않습니다. `release/X.Y.Z` 브랜치로 가는 PR은 마지막에 버전을 올리므로 검사하지 않습니다.
+
 버전은 `plugins/chinese-proofread/.claude-plugin/plugin.json`의 `version` 한 곳에만 적습니다. `marketplace.json`에는 적지 않습니다.
 
-기능 PR에서는 버전을 올리지 않습니다. 배포할 때 전용 PR로 버전을 올리고, `main`에 합친 커밋에 `vX.Y.Z` 태그와 GitHub Release를 만듭니다. 설치된 플러그인의 업데이트는 버전이 올라가야 전달되므로, 플러그인 코드의 변경을 배포하지 않은 채 오래 쌓아 두지 않습니다.
+플러그인 코드를 바꾸는 PR에서는 위 기준에 따라 버전도 함께 올립니다. 이미 설치한 사용자는 버전이 올라가야 업데이트를 받으므로, 코드와 버전을 따로 머지하면 같은 버전 번호가 서로 다른 코드를 가리킬 수 있습니다. PR을 `main`에 머지하면 `release` 워크플로가 그 커밋에 `vX.Y.Z` 태그와 GitHub Release를 자동으로 만듭니다.
+
+여러 PR을 묶어서 배포할 때는 PR들을 임시 `release/X.Y.Z` 브랜치에 먼저 머지합니다. 그다음 이 브랜치에서 버전을 올린 뒤 `main`에 머지하면, 같은 워크플로가 태그와 GitHub Release를 만듭니다.
