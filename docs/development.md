@@ -71,4 +71,6 @@ python3 -m unittest discover -s tests
 
 버전은 `plugins/chinese-proofread/.claude-plugin/plugin.json`의 `version` 한 곳에만 적습니다. `marketplace.json`에는 적지 않습니다.
 
-기능 PR에서는 버전을 올리지 않습니다. 배포할 때 전용 PR로 버전을 올리고, `main`에 합친 커밋에 `vX.Y.Z` 태그와 GitHub Release를 만듭니다. 설치된 플러그인의 업데이트는 버전이 올라가야 전달되므로, 플러그인 코드의 변경을 배포하지 않은 채 오래 쌓아 두지 않습니다.
+플러그인 코드를 바꾸는 PR에서는 위 기준에 따라 버전도 함께 올립니다. 이미 설치한 사용자는 버전이 올라가야 업데이트를 받으므로, 코드와 버전을 따로 머지하면 같은 버전 번호가 서로 다른 코드를 가리킬 수 있습니다. PR을 `main`에 머지하면 `release` 워크플로가 그 커밋에 `vX.Y.Z` 태그와 GitHub Release를 자동으로 만듭니다.
+
+여러 PR을 묶어서 배포할 때는 PR들을 임시 `release/X.Y.Z` 브랜치에 먼저 머지합니다. 그다음 이 브랜치에서 버전을 올린 뒤 `main`에 머지하면, 같은 워크플로가 태그와 GitHub Release를 만듭니다.
