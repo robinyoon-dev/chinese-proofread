@@ -25,6 +25,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 
 from jobs import REPLY_FILE, STALE_SECONDS, jobs, session_dir
 
@@ -43,17 +44,73 @@ REWRITE = (
 # dark-ansi adds, and 231 is white even where a palette redefines 97.
 STYLE = "\x1b[22;38;5;231;48;5;240m"
 RESET = "\x1b[0m"
+# Claude Code indents a hook message by 5 columns. One more keeps a row on one
+# line where the terminal draws an emoji wider than this code counts it.
+MARGIN = 6
+MIN_WIDTH = 20
+
+
+def char_width(char):
+    if char == "\ufe0f":
+        return 1  # Turns the character before it into a wide emoji.
+    if unicodedata.combining(char):
+        return 0
+    return 2 if unicodedata.east_asian_width(char) in "WF" else 1
+
+
+def text_width(text):
+    return sum(char_width(char) for char in text)
+
+
+def block_width(lines):
+    """COLUMNS is set by Claude Code and follows the window size."""
+    try:
+        width = int(os.environ["COLUMNS"]) - MARGIN
+    except (KeyError, ValueError):
+        width = 0
+    if width < MIN_WIDTH:
+        return max(text_width(line) for line in lines)
+    return width
+
+
+def wrapped(line, width):
+    # A row that Claude Code wraps ends short of the others, so it is wrapped
+    # here. Chinese has no spaces to break at, so any character may end a row;
+    # a space counts only past the middle, or a label such as "原文:" would
+    # take up a row of its own.
+    rows = []
+    row = ""
+    for char in line:
+        if text_width(row) + char_width(char) > width:
+            head, _, tail = row.rpartition(" ")
+            if text_width(head) * 2 < width:
+                head, tail = row, ""
+            rows.append(head)
+            row = tail
+        row += char
+    rows.append(row)
+    return rows
 
 
 def styled(text):
     # Claude Code keeps escape codes under NO_COLOR, so it is honoured here.
     if os.environ.get("NO_COLOR"):
         return text
-    lines = [f"{STYLE}{line}{RESET}" if line else line
-             for line in text.split("\n")]
+    lines = text.split("\n")
+    width = block_width(lines)
     # The blank line leaves "Stop says: " alone on the first line, so that
-    # every line of the block starts at the same column.
-    return "\n" + "\n".join(lines)
+    # every row of the block starts at the same column.
+    rows = [""]
+    for line in lines:
+        if not line:
+            rows.append("")
+            continue
+        # A background ends with the text, so spaces fill out the row, as
+        # Claude Code does for the user's own messages.
+        for row in wrapped(line, width):
+            padding = " " * (width - text_width(row))
+            rows.append(f"{STYLE}{row}{padding}{RESET}")
+    return "\n".join(rows)
 
 
 def claim(path):
