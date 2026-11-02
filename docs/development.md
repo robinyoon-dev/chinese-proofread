@@ -52,6 +52,8 @@ python3 -m unittest discover -s tests
 
 `main` 브랜치에 push하거나 pull request를 열면 GitHub Actions가 Python 3.9와 3.14에서 같은 테스트를 실행합니다.
 
+`main` 브랜치에 push하면 `release` 워크플로가 `plugin.json`의 버전을 읽습니다. 이 버전의 `vX.Y.Z` 태그가 아직 없으면 태그와 GitHub Release를 자동으로 만듭니다. 자동으로 생성된 Release 노트에는 PR 목록만 들어가므로, 사용자가 알아야 할 동작 변경은 생성된 Release에 직접 추가합니다.
+
 ## 버전 정책
 
 이 플러그인은 유의적 버전을 따르며, 코드 API가 아니라 사용자가 겪는 동작을 기준으로 버전을 올립니다.
