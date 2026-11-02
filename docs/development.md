@@ -69,6 +69,8 @@ python3 -m unittest discover -s tests
 - **기본값 변경:** 설정을 바꾸지 않아도 동작이 달라지므로, 비용이 늘거나 출력 언어가 바뀌는 등 사용자가 바로 체감하는 변경은 MAJOR로 올리고, 판별 기준을 다듬는 변경은 MINOR로 올립니다.
 - **프롬프트 수정:** `prompts/proofread.md`를 고쳐서 교정 범위가 눈에 띄게 달라지면 MINOR로 올립니다.
 
+`main`으로 가는 PR이 `plugins/` 아래의 파일을 바꾸면서 버전을 `main`보다 높이지 않으면 `version-check` 워크플로가 실패합니다. 올릴 자리는 사용자가 겪는 동작에 따라 사람이 판단해야 하므로, 이 워크플로는 버전을 대신 올리지 않습니다. `release/X.Y.Z` 브랜치로 가는 PR은 마지막에 버전을 올리므로 검사하지 않습니다.
+
 버전은 `plugins/chinese-proofread/.claude-plugin/plugin.json`의 `version` 한 곳에만 적습니다. `marketplace.json`에는 적지 않습니다.
 
 기능 PR에서는 버전을 올리지 않습니다. 배포할 때 전용 PR로 버전을 올리고, `main`에 합친 커밋에 `vX.Y.Z` 태그와 GitHub Release를 만듭니다. 설치된 플러그인의 업데이트는 버전이 올라가야 전달되므로, 플러그인 코드의 변경을 배포하지 않은 채 오래 쌓아 두지 않습니다.
