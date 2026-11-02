@@ -15,6 +15,7 @@
 | `CHINESE_PROOFREAD_MIN_HANZI_MIXED` | `1` | 영문자나 한글이 섞인 입력에 적용하는 최소 한자 수입니다. `CHINESE_PROOFREAD_MIN_HANZI`보다 크게 설정하면 `CHINESE_PROOFREAD_MIN_HANZI` 값을 씁니다. |
 | `CHINESE_PROOFREAD_HANZI_RATIO` | `0` | 한자와 한글을 합한 글자 수에서 한자가 차지해야 하는 최소 비율입니다. `0.5`로 설정하면 한자가 적은 한국어 문장을 교정 대상에서 뺍니다. |
 | `CHINESE_PROOFREAD_HISTORY` | (없음) | `0`으로 설정하면 교정 이력을 기록하지 않습니다. 자세한 내용은 [교정 이력](#교정-이력)에서 설명합니다. |
+| `NO_COLOR` | (없음) | 값이 있으면 교정 블록에 색을 입히지 않습니다. 플러그인 전용이 아니라 여러 프로그램이 함께 따르는 환경 변수입니다. |
 
 숫자를 받는 설정에 숫자가 아닌 값을 넣으면 그 설정은 기본값으로 동작합니다.
 

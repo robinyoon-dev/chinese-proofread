@@ -54,7 +54,9 @@ class Base(unittest.TestCase):
             k: v for k, v in os.environ.items()
             if not k.startswith("CHINESE_PROOFREAD_")
         }
+        # Most tests compare the text; StyleTest covers the colors.
         self.env.update(HOME=self.home, FAKE_LOG=self.log, FAKE_OUTPUT=BLOCK,
+                        NO_COLOR="1",
                         PATH=bin_dir + os.pathsep + self.env["PATH"])
         self.folder = os.path.join(
             self.home, ".claude", "chinese-proofread", "jobs", SESSION)
@@ -298,6 +300,66 @@ class DetectStartsJobTest(Base):
         self.submit("帮我重构一下这个函数")
         self.submit("이 함수를 리팩터링해 줘")
         self.assertIsNone(self.expected_language())
+
+
+class StyleTest(Base):
+    def show(self, columns="", **env):
+        output = self.run_script(SHOW, json.dumps(
+            {"session_id": SESSION, "hook_event_name": "PostToolUse"}),
+            NO_COLOR="", COLUMNS=columns, **env)
+        return json.loads(output)["systemMessage"]
+
+    def row(self, text):
+        return f"{show_result.STYLE}{text}{show_result.RESET}"
+
+    def test_rows_fill_the_window(self):
+        self.write_job("1.json", {"block": "first\n让它"})
+        width = 30 - show_result.MARGIN
+        self.assertEqual(self.show("30"), "\n".join([
+            "", self.row("first".ljust(width)),
+            self.row("让它" + " " * (width - 4))]))
+
+    def test_rows_match_without_the_window_size(self):
+        self.write_job("1.json", {"block": "first\nsecond line"})
+        for columns in ("", "abc", "10"):
+            with self.subTest(columns=columns):
+                self.write_job("1.json", {"block": "first\nsecond line"})
+                self.assertEqual(self.show(columns), "\n".join([
+                    "", self.row("first      "), self.row("second line")]))
+
+    def test_long_chinese_is_wrapped_into_full_rows(self):
+        self.write_job("1.json", {"block": "让" * 30})
+        rows = self.show("30").split("\n")[1:]
+        self.assertEqual(rows, [
+            self.row("让" * 12), self.row("让" * 12), self.row("让" * 6 + " " * 12)])
+
+    def test_long_line_breaks_at_a_space(self):
+        self.assertEqual(show_result.wrapped("first second", 8), ["first", "second"])
+
+    def test_short_label_stays_with_the_text_after_it(self):
+        self.assertEqual(
+            show_result.wrapped("原文: 让他更快一点", 12),
+            ["原文: 让他更", "快一点"])
+
+    def test_emoji_with_a_selector_counts_as_wide(self):
+        self.assertEqual(show_result.text_width("⚠️"), 2)
+
+    def test_lines_between_results_stay_empty(self):
+        self.write_job("1.json", {"block": "first"})
+        self.write_job("2.json", {"block": "second"})
+        self.assertEqual(self.show(), "\n".join([
+            "", self.row("first "), "", self.row("second")]))
+
+    def test_failure_is_styled(self):
+        self.write_job("1.json", {"error": "timed out after 60s"})
+        self.assertIn(show_result.STYLE, self.show())
+
+    def test_no_color_leaves_the_block_as_it_is(self):
+        self.write_job("1.json", {"block": BLOCK})
+        output = self.run_script(SHOW, json.dumps(
+            {"session_id": SESSION, "hook_event_name": "PostToolUse"}),
+            NO_COLOR="1", COLUMNS="30")
+        self.assertEqual(json.loads(output)["systemMessage"], BLOCK)
 
 
 class ShowResultTest(Base):
