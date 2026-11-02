@@ -125,7 +125,7 @@ claude plugin marketplace remove chinese-proofread
 - 교정 에이전트는 프롬프트만 보므로, 이전 대화나 `@파일`의 내용을 알지 못합니다.
 - 교정 결과가 작업 전에 나온다고 보장하지 못합니다. 긴 명령이 도는 동안에는 표시되지 않고, 답변이 끝난 뒤 20초 안에 교정이 끝나지 않으면 다음 턴에 표시됩니다.
 - 교정 결과는 대화형 세션의 화면에 표시합니다. `claude -p`의 최종 답변에는 나오지 않습니다.
-- 고칠 부분이 있었던 교정 결과는 `~/.claude/chinese-proofread/history.jsonl`에 쌓입니다. 끄는 방법은 [교정 이력](docs/configuration.md#교정-이력)에서 설명합니다.
+- 고칠 부분이 있었던 교정 결과는 `~/.claude/chinese-proofread/history/` 폴더에 월별 파일로 쌓입니다. 끄는 방법은 [교정 이력](docs/configuration.md#교정-이력)에서 설명합니다.
 - 한자가 한 글자라도 있는 한국어나 영어 요청에는 훅이 반응하므로, 교정할 대상이 없어도 Sonnet 호출이 한 번 듭니다.
 - Claude가 최종 답변을 중국어로 쓰면 지정한 언어로 한 번 다시 쓰게 합니다. 이때 표시되는 `Stop hook error:`는 Claude Code가 붙이는 문구이며 실제 오류가 아닙니다.
 

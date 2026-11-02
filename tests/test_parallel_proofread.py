@@ -113,13 +113,23 @@ class WorkerTest(Base):
         self.run_worker(FAKE_OUTPUT="NONE\n")
         self.assertEqual(self.files(), [])
 
-    def history_path(self):
+    def history_dir(self):
         return os.path.join(
-            self.home, ".claude", "chinese-proofread", "history.jsonl")
+            self.home, ".claude", "chinese-proofread", "history")
+
+    def history_files(self):
+        try:
+            names = sorted(os.listdir(self.history_dir()))
+        except FileNotFoundError:
+            return []
+        return [os.path.join(self.history_dir(), n) for n in names]
 
     def history(self):
-        with open(self.history_path(), encoding="utf-8") as f:
-            return [json.loads(line) for line in f]
+        entries = []
+        for path in self.history_files():
+            with open(path, encoding="utf-8") as f:
+                entries += [json.loads(line) for line in f]
+        return entries
 
     def test_correction_is_recorded(self):
         self.run_worker()
@@ -132,14 +142,15 @@ class WorkerTest(Base):
 
     def test_history_is_private(self):
         self.run_worker()
-        self.assertEqual(stat.S_IMODE(os.stat(self.history_path()).st_mode),
-                         0o600)
+        path, = self.history_files()
+        self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
 
     def test_history_leaves_the_prompt_out(self):
         running = self.write_job(
             "1.running", {"prompt": "秘密 token=abc", "lang": "Korean"})
         self.run_script(WORKER, args=[running])
-        with open(self.history_path(), encoding="utf-8") as f:
+        path, = self.history_files()
+        with open(path, encoding="utf-8") as f:
             self.assertNotIn("abc", f.read())
 
     def test_corrections_add_up(self):
@@ -151,15 +162,17 @@ class WorkerTest(Base):
         for output in ("📝 中文校对: ✅ 자연스럽습니다.", "NONE\n", "好的。"):
             self.run_worker(FAKE_OUTPUT=output)
         self.run_worker(FAKE_EXIT="1")
-        self.assertFalse(os.path.exists(self.history_path()))
+        self.assertEqual(self.history_files(), [])
 
     def test_history_can_be_turned_off(self):
         self.run_worker(CHINESE_PROOFREAD_HISTORY="0")
         self.assertEqual(self.result(), {"block": BLOCK})
-        self.assertFalse(os.path.exists(self.history_path()))
+        self.assertEqual(self.history_files(), [])
 
     def test_history_failure_keeps_the_result(self):
-        os.makedirs(self.history_path())
+        os.makedirs(os.path.dirname(self.history_dir()))
+        with open(self.history_dir(), "w", encoding="utf-8"):
+            pass  # A file where the folder should be.
         self.run_worker()
         self.assertEqual(self.result(), {"block": BLOCK})
         self.assertEqual(self.files(), ["1.json"])
@@ -399,6 +412,28 @@ class ShowResultTest(Base):
         for stdin in ["", "not json", "[]", "{}", '{"session_id": "../x"}']:
             with self.subTest(stdin=stdin):
                 self.assertEqual(self.run_script(SHOW, stdin), "")
+
+
+class HistoryFileTest(unittest.TestCase):
+    def test_each_month_gets_a_file(self):
+        zone = datetime.timezone(datetime.timedelta(hours=9))
+        times = [
+            datetime.datetime(2026, 10, 31, 23, 59, 59, tzinfo=zone),
+            datetime.datetime(2026, 11, 1, 0, 0, 0, tzinfo=zone),
+        ]
+        with tempfile.TemporaryDirectory() as folder, \
+                mock.patch.object(jobs, "HISTORY_DIR", folder), \
+                mock.patch.object(jobs, "datetime") as clock, \
+                mock.patch.dict(os.environ, CHINESE_PROOFREAD_HISTORY="1"):
+            clock.datetime.now.return_value.astimezone.side_effect = times
+            jobs.append_history(BLOCK, "Korean")
+            jobs.append_history(BLOCK, "Korean")
+            self.assertEqual(sorted(os.listdir(folder)),
+                             ["2026-10.jsonl", "2026-11.jsonl"])
+            with open(os.path.join(folder, "2026-10.jsonl"),
+                      encoding="utf-8") as f:
+                entry, = [json.loads(line) for line in f]
+        self.assertEqual(entry["time"], "2026-10-31T23:59:59+09:00")
 
 
 class SweepTest(unittest.TestCase):
