@@ -37,6 +37,17 @@ def write_enabled(enabled):
     os.replace(tmp, STATE_PATH)
 
 
+def languages():
+    """Returns the explanation language and the chat reply language."""
+    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
+    chat_lang = os.environ.get("CHINESE_PROOFREAD_CHAT_LANG", "").strip()
+    if not chat_lang:
+        chat_lang = lang
+    elif chat_lang.lower() == "prompt":
+        chat_lang = "same as the prompt"
+    return lang, chat_lang
+
+
 def main():
     args = sys.argv[1:]
     action = args[0].lower() if args else "flip"
@@ -57,12 +68,7 @@ def main():
                 "CHINESE_PROOFREAD_ENABLED=0 is set, so proofreading stays off "
                 "until that variable is removed."
             )
-    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
-    chat_lang = os.environ.get("CHINESE_PROOFREAD_CHAT_LANG", "").strip()
-    if not chat_lang:
-        chat_lang = lang
-    elif chat_lang.lower() == "prompt":
-        chat_lang = "same as the prompt"
+    lang, chat_lang = languages()
     print("Explanation language: " + lang)
     print("Chat reply language: " + chat_lang)
 

@@ -99,6 +99,18 @@ claude plugin marketplace remove chinese-proofread
 
 변경한 상태는 다음 입력부터 바로 반영되며, 모든 프로젝트와 세션에 함께 적용됩니다. 특정 프로젝트에서만 항상 끄는 방법은 [특정 프로젝트에서 항상 끄기](docs/configuration.md#특정-프로젝트에서-항상-끄기)에서 설명합니다.
 
+## 교정 이력 요약
+
+다음 명령은 쌓인 교정 이력을 읽어 자주 틀리는 오류와 익혀 둘 표현을 정리합니다.
+
+```
+/chinese-proofread:history         최근 7일을 요약합니다.
+/chinese-proofread:history 30      최근 30일을 요약합니다.
+/chinese-proofread:history all     기록 전체를 요약합니다.
+```
+
+요약은 현재 대화의 모델이 만들므로 토큰을 사용합니다. 기록이 많으면 최근 교정만 읽으며, 이때는 몇 회를 기준으로 삼았는지 함께 보여 줍니다. 자세한 내용은 [교정 이력 요약하기](docs/configuration.md#교정-이력-요약하기)에서 설명합니다.
+
 ## 설정
 
 자주 쓰는 환경 변수는 다음과 같습니다. 전체 목록은 [환경 변수](docs/configuration.md#환경-변수)에서, 언어가 적용되는 범위는 [답변 언어](docs/configuration.md#답변-언어)에서 설명합니다.
