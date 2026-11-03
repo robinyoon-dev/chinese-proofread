@@ -319,6 +319,13 @@ class StyleTest(Base):
             "", self.row("first".ljust(width)),
             self.row("让它" + " " * (width - 4))]))
 
+    def test_rows_stop_at_the_maximum_width(self):
+        self.write_job("1.json", {"block": "first\n" + "让" * 40})
+        width = show_result.MAX_WIDTH
+        self.assertEqual(self.show("200"), "\n".join([
+            "", self.row("first".ljust(width)),
+            self.row("让" * (width // 2)), self.row("让" * 4 + " " * (width - 8))]))
+
     def test_rows_match_without_the_window_size(self):
         self.write_job("1.json", {"block": "first\nsecond line"})
         for columns in ("", "abc", "10"):

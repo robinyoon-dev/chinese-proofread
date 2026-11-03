@@ -48,6 +48,11 @@ RESET = "\x1b[0m"
 # line where the terminal draws an emoji wider than this code counts it.
 MARGIN = 6
 MIN_WIDTH = 20
+# The message is stored with its padding, and when the window narrows Claude
+# Code wraps it again, so the padding spills onto short coloured rows of its
+# own. A fixed cap keeps the block whole in any window at least
+# MAX_WIDTH + MARGIN wide, which an 80-column terminal is.
+MAX_WIDTH = 72
 
 
 def char_width(char):
@@ -70,7 +75,7 @@ def block_width(lines):
         width = 0
     if width < MIN_WIDTH:
         return max(text_width(line) for line in lines)
-    return width
+    return min(width, MAX_WIDTH)
 
 
 def wrapped(line, width):
