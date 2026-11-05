@@ -85,10 +85,13 @@ class Base(unittest.TestCase):
 
 
 class WorkerTest(Base):
-    def run_worker(self, lang="Korean", level=None, **env):
+    def run_worker(self, lang="Korean", level=None, region=None,
+                   phonetic=None, **env):
         job = {"prompt": "让他更快", "lang": lang}
-        if level is not None:
-            job["level"] = level
+        for key, value in [("level", level), ("region", region),
+                           ("phonetic", phonetic)]:
+            if value is not None:
+                job[key] = value
         running = self.write_job("1.running", job)
         self.run_script(WORKER, args=[running], **env)
 
@@ -220,6 +223,45 @@ class WorkerTest(Base):
         self.assertNotIn("학습 수준", self.system_prompt())
         self.assertEqual(self.result(), {"block": BLOCK})
 
+    def test_default_region_adds_no_rules(self):
+        self.run_worker(region="mainland")
+        with_region = self.system_prompt()
+        self.run_worker()
+        self.assertEqual(self.system_prompt(), with_region)
+        self.assertNotIn("교정 기준 지역", with_region)
+
+    def test_region_rules_are_appended_after_the_level(self):
+        self.run_worker(level="advanced", region="taiwan")
+        prompt = self.system_prompt()
+        self.assertIn("✅ line in Korean", prompt)
+        self.assertLess(prompt.index("# 학습 수준: 고급"),
+                        prompt.index("# 교정 기준 지역: 대만"))
+
+    def test_unknown_region_in_a_job_is_the_default(self):
+        self.run_worker(region="../levels/advanced")
+        self.assertNotIn("# ", self.system_prompt())
+        self.assertEqual(self.result(), {"block": BLOCK})
+
+    def test_zhuyin_replaces_the_pinyin(self):
+        block = "📝 中文校对\n原文: 让他更快\n修正: 让它更快\n설명:\n- 它(tā)를 씁니다.\n---"
+        self.run_worker(phonetic="zhuyin", FAKE_OUTPUT=block)
+        shown = block.replace("(tā)", "(ㄊㄚ)")
+        self.assertEqual(self.result(), {"block": shown})
+        self.assertEqual([e["block"] for e in self.history()], [shown])
+        # The model is not told about zhuyin; it always writes pinyin.
+        with open(self.log, encoding="utf-8") as f:
+            self.assertNotIn("zhuyin", " ".join(json.load(f)["args"]))
+
+    def test_pinyin_stays_by_default(self):
+        block = "📝 中文校对\n修正: 让它更快\n설명:\n- 它(tā)를 씁니다.\n---"
+        self.run_worker(FAKE_OUTPUT=block)
+        self.assertEqual(self.result(), {"block": block})
+
+    def test_traditional_heading_is_the_block(self):
+        self.run_worker(region="taiwan",
+                        FAKE_OUTPUT="📝 中文校對: ✅ 자연스럽습니다.")
+        self.assertEqual(self.result(), {"block": "📝 中文校对: ✅ 자연스럽습니다."})
+
     def test_answering_the_prompt_is_a_failure(self):
         self.run_worker(FAKE_OUTPUT="好的，我来修改这个函数。")
         self.assertEqual(self.result(), {"error": "unexpected output"})
@@ -294,6 +336,18 @@ class DetectStartsJobTest(Base):
         self.wait_for_result()
         with open(self.log, encoding="utf-8") as f:
             self.assertIn("# 학습 수준: 고급", " ".join(json.load(f)["args"]))
+
+    def test_region_and_phonetic_reach_the_proofreading(self):
+        self.submit("帮我重构一下这个函数", CHINESE_PROOFREAD_REGION="Taiwan",
+                    CHINESE_PROOFREAD_PHONETIC=" zhuyin ",
+                    FAKE_OUTPUT="📝 中文校对\n설명:\n- 函式(hánshì)\n---")
+        self.wait_for_result()
+        with open(self.log, encoding="utf-8") as f:
+            self.assertIn("# 교정 기준 지역: 대만",
+                          " ".join(json.load(f)["args"]))
+        result = [n for n in self.files() if n.endswith(".json")][0]
+        with open(os.path.join(self.folder, result), encoding="utf-8") as f:
+            self.assertIn("函式(ㄏㄢˊ ㄕˋ)", json.load(f)["block"])
 
     def test_other_prompts_start_nothing(self):
         self.submit("이 함수를 리팩터링해 줘")
@@ -548,6 +602,26 @@ class LevelTest(unittest.TestCase):
             with self.subTest(value=value), \
                     mock.patch.dict(os.environ, env, clear=True):
                 self.assertEqual(jobs.level(), expected)
+
+
+class RegionTest(unittest.TestCase):
+    def test_region_comes_from_the_environment(self):
+        cases = [(None, "mainland"), ("taiwan", "taiwan"),
+                 (" TAIWAN ", "taiwan"), ("hongkong", "mainland")]
+        for value, expected in cases:
+            env = {} if value is None else {"CHINESE_PROOFREAD_REGION": value}
+            with self.subTest(value=value), \
+                    mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(jobs.region(), expected)
+
+    def test_phonetic_comes_from_the_environment(self):
+        cases = [(None, "pinyin"), ("zhuyin", "zhuyin"),
+                 ("Zhuyin", "zhuyin"), ("bopomofo", "pinyin")]
+        for value, expected in cases:
+            env = {} if value is None else {"CHINESE_PROOFREAD_PHONETIC": value}
+            with self.subTest(value=value), \
+                    mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(jobs.phonetic(), expected)
 
 
 class SweepTest(unittest.TestCase):

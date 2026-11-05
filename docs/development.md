@@ -34,15 +34,18 @@ plugins/chinese-proofread/
   hooks/proofread_worker.py                claude -p로 교정하는 별도 프로세스
   hooks/show_result.py                     끝난 교정 결과를 표시하고 중국어 답변을 다시 쓰게 하는 스크립트
   hooks/jobs.py                            교정 작업 파일을 다루는 공용 코드
+  hooks/zhuyin.py                          교정 블록의 병음을 주음부호로 바꾸는 코드
   scripts/toggle.py                        교정 기능의 상태를 바꾸는 스크립트
   scripts/history.py                       교정 이력에서 요약할 설명 줄을 뽑는 스크립트
   prompts/proofread.md                     교정 규칙과 출력 형식
   prompts/levels/                          기본값이 아닌 학습 수준에서 덧붙이는 교정 규칙
+  prompts/regions/                         기본값이 아닌 지역에서 덧붙이는 교정 규칙
   skills/toggle/SKILL.md                   교정 기능을 켜고 끄는 명령
   skills/history/SKILL.md                  교정 이력을 요약하는 명령
 tests/test_detect_chinese.py               중국어 판별 스크립트의 테스트
 tests/test_parallel_proofread.py           교정 실행과 결과 표시의 테스트
 tests/test_history.py                      교정 이력 요약 스크립트의 테스트
+tests/test_zhuyin.py                       병음을 주음부호로 바꾸는 코드의 테스트
 .github/workflows/test.yml                 테스트를 실행하는 GitHub Actions 워크플로
 ```
 

@@ -32,6 +32,10 @@ STALE_SECONDS = WORKER_TIMEOUT + 30
 KEEP_SECONDS = 24 * 60 * 60
 LEVELS = ("beginner", "intermediate", "advanced")
 DEFAULT_LEVEL = "intermediate"
+REGIONS = ("mainland", "taiwan")
+DEFAULT_REGION = "mainland"
+PHONETICS = ("pinyin", "zhuyin")
+DEFAULT_PHONETIC = "pinyin"
 
 
 def session_dir(session_id):
@@ -54,10 +58,22 @@ def jobs(path, suffix):
     return [os.path.join(path, n) for n in names if n.endswith(suffix)]
 
 
-def level():
+def setting(name, values, default):
     # An unknown value proofreads as before instead of failing the hook.
-    value = os.environ.get("CHINESE_PROOFREAD_LEVEL", "").strip().lower()
-    return value if value in LEVELS else DEFAULT_LEVEL
+    value = os.environ.get(name, "").strip().lower()
+    return value if value in values else default
+
+
+def level():
+    return setting("CHINESE_PROOFREAD_LEVEL", LEVELS, DEFAULT_LEVEL)
+
+
+def region():
+    return setting("CHINESE_PROOFREAD_REGION", REGIONS, DEFAULT_REGION)
+
+
+def phonetic():
+    return setting("CHINESE_PROOFREAD_PHONETIC", PHONETICS, DEFAULT_PHONETIC)
 
 
 def write_json(path, value):

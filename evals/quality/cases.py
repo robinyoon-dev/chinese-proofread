@@ -560,6 +560,79 @@ LEVEL_CASES = [
     },
 ]
 
+# Taiwan (#5). Only run_worker_eval.py runs these, with --region taiwan, and
+# they replace the cases above there: those are written in simplified
+# characters, which taiwan always corrects. They run at every level.
+REGION_CASES = [
+    {
+        "name": "region-tw-ok",
+        "kind": "ok",
+        "prompt": "幫我把utils.py裡的average函式修好，它算出來的結果不對。",
+        "expect": "대만 어휘와 번체자로 쓴 자연스러운 문장",
+        "files": {"utils.py": UTILS},
+        "graders": [],
+    },
+    {
+        # Both 台 and 臺 are used in Taiwan; the one the user wrote stays.
+        "name": "region-tw-keep-variant",
+        "kind": "ok",
+        "prompt": "幫我在設定裡加上台北的時區。",
+        "expect": "台를 臺로 바꾸지 않음",
+        "files": {},
+        "graders": [reply_lacks(r"臺北", "region-keep-variant")],
+    },
+    {
+        "name": "region-tw-mainland-words",
+        "kind": "fix",
+        "prompt": "這個軟件的默認設定有問題，幫我看一下。",
+        "expect": "軟件 → 軟體, 默認 → 預設",
+        "files": {},
+        "graders": [fixed_in(r"軟件|默認"),
+                    reply_has(r"^修正:.*軟體.*預設", "region-taiwan-words", "m")],
+    },
+    {
+        # Correct in both places; only the script differs.
+        "name": "region-tw-script-only",
+        "kind": "fix",
+        "prompt": "帮我看一下这个错误是怎么回事。",
+        "expect": "幫我看一下這個錯誤是怎麼回事。 (설명은 한 줄)",
+        "files": {},
+        # The one line names no word, so it has no pinyin to check.
+        "without": ["pinyin-present"],
+        "graders": [fixed_in(r"[帮这错么]"),
+                    reply_has(r"^修正:.*這個錯誤", "region-traditional", "m"),
+                    reply_lacks(r"^- .*\n- ", "region-script-one-line", "m")],
+    },
+    {
+        "name": "region-tw-simplified-mainland-words",
+        "kind": "fix",
+        "prompt": "帮我把这个视频上传到服务器。",
+        "expect": "幫我把這個影片上傳到伺服器。",
+        "files": {},
+        "graders": [fixed_in(r"[帮这视频传务]|服務器|視頻"),
+                    reply_has(r"^修正:.*影片.*伺服器", "region-taiwan-words", "m")],
+    },
+    {
+        "name": "region-tw-substitute",
+        "kind": "fix",
+        "prompt": "把local server跑起來。",
+        "expect": "local server → 本機伺服器 / 本地伺服器",
+        "files": {},
+        "graders": [reply_has(r"^修正:.*伺服器", "region-taiwan-words", "m"),
+                    # The explanation may name the mainland word to compare.
+                    reply_lacks(r"^修正:.*(?:服务器|服務器)",
+                                "region-no-mainland", "m")],
+    },
+    {
+        "name": "region-tw-mixed-word",
+        "kind": "word",
+        "prompt": "로그인 按钮 좀 키워 줘",
+        "expect": "按钮 → 按鈕",
+        "files": {},
+        "graders": [reply_has(r"按鈕", "region-traditional")],
+    },
+]
+
 
 def at_level(case, level):
     """The case as it runs at level, or None if it does not run there."""
