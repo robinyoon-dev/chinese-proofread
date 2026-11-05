@@ -532,3 +532,40 @@ CASES = [
         "graders": [reply_has(r"튜플|tuple", "work-answer")],
     },
 ]
+
+# Learning levels (#4). Only run_worker_eval.py runs these, with --level: they
+# score the proofreading alone, and each case holds the kind it expects at
+# each level it runs at. The cases above run at every level.
+LEVEL_CASES = [
+    {
+        # Correct, but the polite 麻烦您 and the casual 搞 do not match.
+        # Below advanced, colloquial words stay.
+        "name": "level-register-mismatch",
+        "kinds": {"beginner": "ok", "intermediate": "ok", "advanced": "fix"},
+        "prompt": "麻烦您帮我把average函数搞一下，它算出来的结果不对。",
+        "expect": "advanced: 搞 → 处理/修改 (麻烦您과 어조가 맞지 않음)",
+        "files": {"utils.py": UTILS},
+        "graders": [],
+        "advanced_graders": [fixed_in(r"搞")],
+    },
+    {
+        # Wordy rather than wrong: 进行一下修改 for 改一下.
+        "name": "level-wordy",
+        "kinds": {"advanced": "fix"},
+        "prompt": "请你对utils.py里的average函数进行一下修改，让它的结果变得正确。",
+        "expect": "advanced: 进行一下修改 → 改一下",
+        "files": {"utils.py": UTILS},
+        "graders": [],
+        "advanced_graders": [fixed_in(r"进行一下修改")],
+    },
+]
+
+
+def at_level(case, level):
+    """The case as it runs at level, or None if it does not run there."""
+    if "kinds" not in case:
+        return case
+    if level not in case["kinds"]:
+        return None
+    graders = case["graders"] + case.get(level + "_graders", [])
+    return dict(case, kind=case["kinds"][level], graders=graders)

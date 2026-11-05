@@ -18,7 +18,8 @@ import re
 import subprocess
 import sys
 
-from jobs import BLOCK, INTERNAL_ENV, WORKER_TIMEOUT, append_history, write_json
+from jobs import (BLOCK, DEFAULT_LEVEL, INTERNAL_ENV, LEVELS, WORKER_TIMEOUT,
+                  append_history, write_json)
 
 MODEL = "sonnet"
 NOTHING_TO_PROOFREAD = "NONE"
@@ -26,13 +27,22 @@ NOTHING_TO_PROOFREAD = "NONE"
 # reliably, so it is dropped for other languages. The lines below it still read
 # as explanations.
 KOREAN_LABEL = re.compile(r"^설명:[ \t]*\n", re.M)
-PROMPT_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "prompts", "proofread.md",
-)
+PROMPTS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "prompts")
+PROMPT_FILE = os.path.join(PROMPTS_DIR, "proofread.md")
 
 
-def command(lang, model=MODEL):
+def level_rules(level):
+    # The default level adds nothing, so it proofreads exactly as before. The
+    # name becomes a path, so only a known level gets that far.
+    if level == DEFAULT_LEVEL or level not in LEVELS:
+        return ""
+    with open(os.path.join(PROMPTS_DIR, "levels", level + ".md"),
+              encoding="utf-8") as f:
+        return "\n\n" + f.read()
+
+
+def command(lang, model=MODEL, level=DEFAULT_LEVEL):
     return [
         "claude", "-p", "--model", model, "--tools", "",
         "--setting-sources", "", "--strict-mcp-config",
@@ -41,7 +51,7 @@ def command(lang, model=MODEL):
         "--append-system-prompt",
         f"Write the explanations and the ✅ line in {lang}, even though the "
         f"Chinese is in another language. Do not explain in Chinese unless "
-        f"{lang} is Chinese.",
+        f"{lang} is Chinese." + level_rules(level),
     ]
 
 
@@ -65,12 +75,12 @@ def fit_language(block, lang):
     return KOREAN_LABEL.sub("", block)
 
 
-def proofread(prompt, lang, model=MODEL, cwd=None):
+def proofread(prompt, lang, model=MODEL, cwd=None, level=DEFAULT_LEVEL):
     """Returns the block, None if there is nothing to proofread, or raises
     RuntimeError with the reason."""
     try:
         result = subprocess.run(
-            command(lang, model),
+            command(lang, model, level),
             input=message(prompt),
             capture_output=True, text=True, encoding="utf-8",
             timeout=WORKER_TIMEOUT, cwd=cwd,
@@ -99,7 +109,10 @@ def main():
     try:
         with open(running, encoding="utf-8") as f:
             job = json.load(f)
-        block = proofread(job["prompt"], job["lang"], cwd=os.path.dirname(running))
+        # A job written before levels existed proofreads at the default.
+        block = proofread(job["prompt"], job["lang"],
+                          cwd=os.path.dirname(running),
+                          level=job.get("level", DEFAULT_LEVEL))
         if block is not None:
             write_json(done, {"block": block})
             record(block, job["lang"])

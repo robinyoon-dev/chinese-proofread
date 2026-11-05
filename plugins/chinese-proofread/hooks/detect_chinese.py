@@ -30,6 +30,7 @@ Env:
                                  minimum hanzi with Latin letters or Hangul
                                  (default: 1)
   CHINESE_PROOFREAD_HANZI_RATIO  minimum hanzi / (hanzi + Hangul) (default: 0)
+  CHINESE_PROOFREAD_LEVEL        beginner, intermediate (default) or advanced
   CHINESE_PROOFREAD_HISTORY      set to 0 to keep corrections out of the history
   CHINESE_PROOFREAD_INTERNAL    set for the proofreading process itself
 """
@@ -39,8 +40,8 @@ import os
 import subprocess
 import sys
 
-from jobs import (INTERNAL_ENV, REPLY_FILE, new_job, session_dir, sweep,
-                  write_json)
+from jobs import (INTERNAL_ENV, REPLY_FILE, level, new_job, session_dir,
+                  sweep, write_json)
 
 # Keep in sync with STATE_PATH in scripts/toggle.py.
 STATE_PATH = os.path.expanduser("~/.claude/chinese-proofread/state.json")
@@ -79,7 +80,7 @@ def start_proofreading(session_id, prompt, lang):
     running = job + ".running"
     try:
         os.makedirs(folder, mode=0o700, exist_ok=True)
-        write_json(running, {"prompt": prompt, "lang": lang})
+        write_json(running, {"prompt": prompt, "lang": lang, "level": level()})
         # Nothing may stay attached to this hook, or Claude Code would wait
         # for the worker before starting the work.
         subprocess.Popen(

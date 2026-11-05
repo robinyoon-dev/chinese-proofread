@@ -119,6 +119,7 @@ claude plugin marketplace remove chinese-proofread
 |---|---|---|
 | `CHINESE_PROOFREAD_LANG` | `Korean` | 교정 설명에 사용할 언어입니다. |
 | `CHINESE_PROOFREAD_CHAT_LANG` | (없음) | 대화 응답에 사용할 언어입니다. 지정하지 않으면 교정 설명과 같은 언어를 쓰고, `prompt`로 설정하면 요청을 쓴 언어를 씁니다. |
+| `CHINESE_PROOFREAD_LEVEL` | `intermediate` | 학습 수준입니다. `beginner`로 설정하면 설명을 더 자세히 쓰고, `advanced`로 설정하면 한 문장 안에서 어조나 격식이 어긋나는 부분도 고칩니다. |
 | `CHINESE_PROOFREAD_HANZI_RATIO` | `0` | `0.5`로 설정하면 한자가 적은 한국어 문장을 교정 대상에서 뺍니다. |
 
 예를 들어 설명을 영어로 받으려면 `~/.claude/settings.json`에 다음 내용을 추가하고 Claude Code를 다시 시작합니다.

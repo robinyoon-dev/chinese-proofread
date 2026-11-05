@@ -13,6 +13,7 @@ Usage:
   python3 evals/quality/run_worker_eval.py                  # sonnet, 1 run each
   python3 evals/quality/run_worker_eval.py --model haiku --runs 3
   python3 evals/quality/run_worker_eval.py --case 'fix-*'
+  python3 evals/quality/run_worker_eval.py --level advanced --runs 3
   python3 evals/quality/run_worker_eval.py --summary results/<run>/worker.json
 """
 
@@ -21,6 +22,7 @@ import datetime
 import fnmatch
 import json
 import os
+import re
 import statistics
 import subprocess
 import sys
@@ -29,14 +31,17 @@ import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 
+from cases import LEVEL_CASES, at_level
 from run_eval import CASES, KIND_GRADERS, METRICS, RESULTS, metric_of, regrade
 
-from jobs import BLOCK, INTERNAL_ENV, WORKER_TIMEOUT  # noqa: E402
+from jobs import (BLOCK, DEFAULT_LEVEL, INTERNAL_ENV, LEVELS,  # noqa: E402
+                  WORKER_TIMEOUT)
 from proofread_worker import MODEL, command, message, parse_output  # noqa: E402
 
 SKIPPED_METRICS = {"work", "ask"}
 LANG = "Korean"
 WORKERS = 4
+EXPLANATION = re.compile(r"^- (.+)$", re.M)
 
 
 def graders_of(case):
@@ -45,13 +50,17 @@ def graders_of(case):
             and g.get("type") == "regex" and "target" not in g]
 
 
-def run_once(case, model, run):
+def cases_at(level):
+    return [c for c in (at_level(c, level) for c in CASES + LEVEL_CASES) if c]
+
+
+def run_once(case, model, run, level):
     record = {"case": case["name"], "kind": case["kind"], "run": run}
     started = time.time()
     with tempfile.TemporaryDirectory() as cwd:
         try:
             result = subprocess.run(
-                command(LANG, model) + ["--output-format", "json"],
+                command(LANG, model, level) + ["--output-format", "json"],
                 input=message(case["prompt"]), capture_output=True, text=True,
                 encoding="utf-8", timeout=WORKER_TIMEOUT, cwd=cwd,
                 env=dict(os.environ, **{INTERNAL_ENV: "1"}),
@@ -77,9 +86,12 @@ def run_once(case, model, run):
 def summarize(path):
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
-    cases = {c["name"]: c for c in CASES}
+    level = data.get("level", DEFAULT_LEVEL)
+    cases = {c["name"]: c for c in cases_at(level)}
     counts = defaultdict(lambda: [0, 0, 0])
     failures = []
+    # How long the explanations are, to compare levels.
+    explanations = []
     for record in data["records"]:
         case = cases.get(record["case"])
         if case is None:
@@ -89,6 +101,8 @@ def summarize(path):
                             f"{record.get('output', '')[:80]!r}")
             continue
         text = record["text"]
+        if case["kind"] == "fix":
+            explanations.append(EXPLANATION.findall(text))
         for grader in graders_of(case):
             metric = metric_of(grader["name"])
             if (case["kind"] != "none" and grader["match"] == "not_contains"
@@ -108,7 +122,7 @@ def summarize(path):
         statuses[record["status"]] += 1
     timed = sorted(r["seconds"] for r in records)
     costs = [r["cost"] for r in records if "cost" in r]
-    print(f"model {data['model']}  calls {len(records)}  "
+    print(f"model {data['model']}  level {level}  calls {len(records)}  "
           f"{dict(statuses)}  total ${sum(costs):.3f}  "
           f"per call ${statistics.mean(costs):.5f}")
     print(f"  seconds: median {statistics.median(timed):.1f}  "
@@ -119,6 +133,11 @@ def summarize(path):
         passed, total, skipped = counts[metric]
         note = f", {skipped} no block" if skipped else ""
         print(f"  {label:<24} {passed / total:.3f} ({passed}/{total}{note})")
+    lines = [line for block in explanations for line in block]
+    if lines:
+        print(f"  explanations in fix cases: "
+              f"{len(lines) / len(explanations):.2f} lines per block, "
+              f"{statistics.mean(len(line) for line in lines):.0f} chars per line")
     if failures:
         print("\nfailed:")
         for line in failures:
@@ -129,6 +148,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--model", default=MODEL)
     parser.add_argument("--runs", type=int, default=1)
+    parser.add_argument("--level", choices=LEVELS, default=DEFAULT_LEVEL)
     parser.add_argument("--case", help="only cases whose name matches this glob")
     parser.add_argument("--summary", metavar="WORKER_JSON",
                         help="only summarize an earlier worker.json")
@@ -137,21 +157,25 @@ def main():
         summarize(args.summary)
         return
 
-    cases = [c for c in CASES
+    cases = [c for c in cases_at(args.level)
              if not args.case or fnmatch.fnmatch(c["name"], args.case)]
     if not cases:
         sys.exit(f"no case matches {args.case}")
-    jobs = [(c, args.model, run) for c in cases
+    jobs = [(c, args.model, run, args.level) for c in cases
             for run in range(1, args.runs + 1)]
     with ThreadPoolExecutor(WORKERS) as pool:
         records = list(pool.map(lambda job: run_once(*job), jobs))
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    out = os.path.join(RESULTS, f"{stamp}-worker-{args.model}")
+    name = f"{stamp}-worker-{args.model}"
+    if args.level != DEFAULT_LEVEL:
+        name += "-" + args.level
+    out = os.path.join(RESULTS, name)
     os.makedirs(out)
     path = os.path.join(out, "worker.json")
     with open(path, "w", encoding="utf-8") as f:
-        json.dump({"model": args.model, "records": records}, f,
+        json.dump({"model": args.model, "level": args.level,
+                   "records": records}, f,
                   ensure_ascii=False, indent=1)
     summarize(path)
     print(f"\n{path}")
