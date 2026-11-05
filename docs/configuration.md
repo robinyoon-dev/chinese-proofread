@@ -11,6 +11,7 @@
 | `CHINESE_PROOFREAD_ENABLED` | (없음) | `0`으로 설정하면 교정 기능을 끕니다. 사용 방법은 [특정 프로젝트에서 항상 끄기](#특정-프로젝트에서-항상-끄기)에서 설명합니다. |
 | `CHINESE_PROOFREAD_LANG` | `Korean` | 교정 블록의 설명과 `✅` 줄에 사용할 언어입니다. |
 | `CHINESE_PROOFREAD_CHAT_LANG` | (없음) | 교정 블록 밖에서 Claude가 사용자에게 하는 말에 사용할 언어입니다. 지정하지 않으면 `CHINESE_PROOFREAD_LANG`과 같은 언어를 쓰고, `prompt`로 설정하면 요청을 쓴 언어를 씁니다. 자세한 동작은 [답변 언어](#답변-언어)에서 설명합니다. |
+| `CHINESE_PROOFREAD_LEVEL` | `intermediate` | 학습 수준입니다. 자세한 동작은 [학습 수준](#학습-수준)에서 설명합니다. |
 | `CHINESE_PROOFREAD_MIN_HANZI` | `4` | 중국어로 판별하는 데 필요한 최소 한자 수입니다. |
 | `CHINESE_PROOFREAD_MIN_HANZI_MIXED` | `1` | 영문자나 한글이 섞인 입력에 적용하는 최소 한자 수입니다. `CHINESE_PROOFREAD_MIN_HANZI`보다 크게 설정하면 `CHINESE_PROOFREAD_MIN_HANZI` 값을 씁니다. |
 | `CHINESE_PROOFREAD_HANZI_RATIO` | `0` | 한자와 한글을 합한 글자 수에서 한자가 차지해야 하는 최소 비율입니다. `0.5`로 설정하면 한자가 적은 한국어 문장을 교정 대상에서 뺍니다. |
@@ -44,6 +45,30 @@ Claude가 쓰는 텍스트는 교정 블록, 대화 응답, 작업 결과물의 
 {
   "env": {
     "CHINESE_PROOFREAD_CHAT_LANG": "prompt"
+  }
+}
+```
+
+## 학습 수준
+
+`CHINESE_PROOFREAD_LEVEL`은 무엇을 고칠지와 설명을 얼마나 자세히 쓸지를 정합니다.
+
+| 값 | 고치는 범위 | 설명 |
+|---|---|---|
+| `beginner` | `intermediate`와 같습니다. | 고친 이유마다 한 줄을 쓰되, 문법 항목의 이름과 짧은 예를 덧붙입니다. |
+| `intermediate` (기본값) | 틀렸거나 원어민이 어색하게 느끼는 표현만 고칩니다. | 고친 이유마다 한 줄로 짧게 씁니다. |
+| `advanced` | `intermediate`의 범위에 더해, 문법이 맞더라도 한 문장 안에서 어조나 격식이 어긋나는 부분을 고칩니다. | 고친 이유마다 한 줄로 짧게 쓰고, 고치지 않은 부분에 관한 줄은 쓰지 않습니다. |
+
+- 병음은 모든 수준에서 설명에 나오는 단어에 붙입니다.
+- `advanced`에서도 문장 전체의 어조는 유지합니다. 예를 들어 구어체로 쓴 문장은 문어체로 바꾸지 않고, `麻烦您…搞一下`처럼 한 문장 안에서 어조가 어긋나는 부분만 문장의 나머지에 맞춥니다. 더 자연스럽거나 간결한 다른 표현이 있다는 이유만으로는 고치지 않습니다.
+- 그 밖의 값을 넣으면 `intermediate`로 동작합니다. HSK 급수는 받지 않습니다.
+
+예를 들어 고급 수준으로 교정을 받으려면 `~/.claude/settings.json`에 다음 내용을 추가합니다.
+
+```json
+{
+  "env": {
+    "CHINESE_PROOFREAD_LEVEL": "advanced"
   }
 }
 ```

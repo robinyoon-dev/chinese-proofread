@@ -85,10 +85,17 @@ class Base(unittest.TestCase):
 
 
 class WorkerTest(Base):
-    def run_worker(self, lang="Korean", **env):
-        running = self.write_job(
-            "1.running", {"prompt": "让他更快", "lang": lang})
+    def run_worker(self, lang="Korean", level=None, **env):
+        job = {"prompt": "让他更快", "lang": lang}
+        if level is not None:
+            job["level"] = level
+        running = self.write_job("1.running", job)
         self.run_script(WORKER, args=[running], **env)
+
+    def system_prompt(self):
+        with open(self.log, encoding="utf-8") as f:
+            args = json.load(f)["args"]
+        return args[args.index("--append-system-prompt") + 1]
 
     def result(self):
         with open(os.path.join(self.folder, "1.json"), encoding="utf-8") as f:
@@ -193,6 +200,26 @@ class WorkerTest(Base):
             self.assertEqual(worker.wait(), 0)
         self.assertEqual([e["block"] for e in self.history()], [block] * 8)
 
+    def test_default_level_adds_no_rules(self):
+        self.run_worker(level="intermediate")
+        with_level = self.system_prompt()
+        self.run_worker()
+        self.assertEqual(self.system_prompt(), with_level)
+        self.assertNotIn("학습 수준", with_level)
+
+    def test_level_rules_are_appended(self):
+        for level, title in [("beginner", "초급"), ("advanced", "고급")]:
+            with self.subTest(level=level):
+                self.run_worker(level=level)
+                prompt = self.system_prompt()
+                self.assertIn("✅ line in Korean", prompt)
+                self.assertIn(f"# 학습 수준: {title}", prompt)
+
+    def test_unknown_level_in_a_job_is_the_default(self):
+        self.run_worker(level="../proofread")
+        self.assertNotIn("학습 수준", self.system_prompt())
+        self.assertEqual(self.result(), {"block": BLOCK})
+
     def test_answering_the_prompt_is_a_failure(self):
         self.run_worker(FAKE_OUTPUT="好的，我来修改这个函数。")
         self.assertEqual(self.result(), {"error": "unexpected output"})
@@ -261,6 +288,12 @@ class DetectStartsJobTest(Base):
         output = self.run_script(SHOW, json.dumps(
             {"session_id": SESSION, "hook_event_name": "PostToolUse"}))
         self.assertEqual(json.loads(output), {"systemMessage": BLOCK})
+
+    def test_level_reaches_the_proofreading(self):
+        self.submit("帮我重构一下这个函数", CHINESE_PROOFREAD_LEVEL=" Advanced ")
+        self.wait_for_result()
+        with open(self.log, encoding="utf-8") as f:
+            self.assertIn("# 학습 수준: 고급", " ".join(json.load(f)["args"]))
 
     def test_other_prompts_start_nothing(self):
         self.submit("이 함수를 리팩터링해 줘")
@@ -503,6 +536,18 @@ class HistoryFileTest(unittest.TestCase):
                       encoding="utf-8") as f:
                 entry, = [json.loads(line) for line in f]
         self.assertEqual(entry["time"], "2026-10-31T23:59:59+09:00")
+
+
+class LevelTest(unittest.TestCase):
+    def test_level_comes_from_the_environment(self):
+        cases = [(None, "intermediate"), ("beginner", "beginner"),
+                 ("ADVANCED", "advanced"), ("hsk4", "intermediate"),
+                 ("", "intermediate")]
+        for value, expected in cases:
+            env = {} if value is None else {"CHINESE_PROOFREAD_LEVEL": value}
+            with self.subTest(value=value), \
+                    mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(jobs.level(), expected)
 
 
 class SweepTest(unittest.TestCase):

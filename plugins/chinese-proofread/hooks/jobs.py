@@ -30,6 +30,8 @@ WORKER_TIMEOUT = 60
 # How long a job may stay .running before its worker counts as dead.
 STALE_SECONDS = WORKER_TIMEOUT + 30
 KEEP_SECONDS = 24 * 60 * 60
+LEVELS = ("beginner", "intermediate", "advanced")
+DEFAULT_LEVEL = "intermediate"
 
 
 def session_dir(session_id):
@@ -50,6 +52,12 @@ def jobs(path, suffix):
     except OSError:
         return []
     return [os.path.join(path, n) for n in names if n.endswith(suffix)]
+
+
+def level():
+    # An unknown value proofreads as before instead of failing the hook.
+    value = os.environ.get("CHINESE_PROOFREAD_LEVEL", "").strip().lower()
+    return value if value in LEVELS else DEFAULT_LEVEL
 
 
 def write_json(path, value):
