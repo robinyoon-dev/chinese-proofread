@@ -119,6 +119,48 @@ SKIP = [
     regex("skip-no-mention", r"교정|校对|proofread", "not_contains", "i"),
 ]
 
+# #34: run_worker_eval.py --lang english swaps each Korean-only grader for
+# the one here with the same name, so the metrics stay comparable. The
+# Korean label above the explanations is dropped for English
+# (fit_language), so the lines follow 修正 directly.
+# A common function word, or three ASCII words in a row. Either alone misses
+# real English: "Taiwan uses traditional characters." has no function word,
+# and "variable is 变量(biànliàng) in Chinese." no three words in a row.
+# Pinyin rarely runs three words without a tone mark.
+ENGLISH_WORDS = (r"(?:\b(?i:the|a|an|is|are|to|of|for|in|on|with|and|or|not|"
+                 r"it|this|that|as|by|when|use|means)\b"
+                 r"|[A-Za-z]+(?:[ ,'-]+[A-Za-z]+){2})")
+ENGLISH_GRADERS = {
+    "format-ok-first": regex("format-ok-first",
+                             r"^\s*📝 中文校对: ✅ Looks natural\."),
+    "format-explain": regex("format-explain", r"^修正:.*\n- ", flags="m"),
+    "overfix-no-note": regex("overfix-no-note", r"✅[^\n]*\n[ \t]*- ",
+                             "not_contains"),
+    # Stricter than explain-korean: every bullet line, not only the first,
+    # needs English words and no Hangul.
+    "explain-korean": regex(
+        "explain-english",
+        r"^- [^\n]*[가-힣]"
+        r"|^- (?![^\n]*" + ENGLISH_WORDS + r")[^\n]*$"
+        r"|📝 中文校对: ✅(?:[^\n]*[가-힣]|(?![^\n]*[A-Za-z]))",
+        "not_contains", "m"),
+    "punct-no-note": regex(
+        "punct-no-note", r"punctuation|full-width|\bperiod\b|\bcomma\b",
+        "not_contains", "i"),
+    # The Korean graders look for "bug는 중국어로" and the like.
+    "keep-english-no-note": regex(
+        "keep-english-no-note",
+        r"\b(?:bug|API|JSON|PR)\b (?:is|are)\b[^\n.]*\bChinese\b",
+        "not_contains"),
+}
+
+
+def in_language(graders, lang):
+    if lang != "english":
+        return graders
+    return [ENGLISH_GRADERS.get(g["name"], g) for g in graders]
+
+
 KIND_GRADERS = {
     "fix": [
         BLOCK_FIRST,
