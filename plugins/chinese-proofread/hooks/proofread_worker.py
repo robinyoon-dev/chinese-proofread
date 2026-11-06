@@ -26,10 +26,11 @@ from zhuyin import convert_block
 MODEL = "sonnet"
 NOTHING_TO_PROOFREAD = "NONE"
 TRADITIONAL_BLOCK = BLOCK.replace("对", "對")
+BARE_NOTHING_TO_FIX = re.compile(r"(?:📝[^\n:]*:\s*)?✅")
 PROMPTS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "prompts")
 PROMPT_FILE = os.path.join(PROMPTS_DIR, "proofread.md")
-# The rules are in English; the examples are in the explanation language, and
+# The rules stay in Korean; the examples are in the explanation language, and
 # any language without its own examples gets the English ones (#35).
 LANGUAGES = {"korean": "korean", "한국어": "korean",
              "english": "english", "영어": "english"}
@@ -97,6 +98,11 @@ def parse_output(output):
     # heading too; the rest of the code looks for the fixed one.
     if output.startswith(TRADITIONAL_BLOCK):
         output = BLOCK + output[len(TRADITIONAL_BLOCK):]
+    # With the rules in Korean, the model sometimes wrote the ✅ line as a
+    # bare ✅ or with the heading translated (#35); the verdict is still that
+    # nothing needs fixing.
+    if BARE_NOTHING_TO_FIX.fullmatch(output):
+        return NOTHING_TO_FIX
     # Anything else means the model answered the prompt instead.
     if not output.startswith(BLOCK):
         raise RuntimeError("unexpected output")
