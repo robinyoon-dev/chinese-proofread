@@ -18,11 +18,14 @@ import re
 import subprocess
 import sys
 
-from jobs import (BLOCK, DEFAULT_LEVEL, INTERNAL_ENV, LEVELS, WORKER_TIMEOUT,
-                  append_history, write_json)
+from jobs import (BLOCK, DEFAULT_LEVEL, DEFAULT_PHONETIC, DEFAULT_REGION,
+                  INTERNAL_ENV, LEVELS, REGIONS, WORKER_TIMEOUT, append_history,
+                  write_json)
+from zhuyin import convert_block
 
 MODEL = "sonnet"
 NOTHING_TO_PROOFREAD = "NONE"
+TRADITIONAL_BLOCK = BLOCK.replace("对", "對")
 # The label is part of the Korean template and the model does not translate it
 # reliably, so it is dropped for other languages. The lines below it still read
 # as explanations.
@@ -32,17 +35,17 @@ PROMPTS_DIR = os.path.join(
 PROMPT_FILE = os.path.join(PROMPTS_DIR, "proofread.md")
 
 
-def level_rules(level):
-    # The default level adds nothing, so it proofreads exactly as before. The
-    # name becomes a path, so only a known level gets that far.
-    if level == DEFAULT_LEVEL or level not in LEVELS:
+def rules(folder, name, names, default):
+    # A default adds nothing, so it proofreads exactly as before. The name
+    # becomes a path, so only a known name gets that far.
+    if name == default or name not in names:
         return ""
-    with open(os.path.join(PROMPTS_DIR, "levels", level + ".md"),
+    with open(os.path.join(PROMPTS_DIR, folder, name + ".md"),
               encoding="utf-8") as f:
         return "\n\n" + f.read()
 
 
-def command(lang, model=MODEL, level=DEFAULT_LEVEL):
+def command(lang, model=MODEL, level=DEFAULT_LEVEL, region=DEFAULT_REGION):
     return [
         "claude", "-p", "--model", model, "--tools", "",
         "--setting-sources", "", "--strict-mcp-config",
@@ -51,7 +54,9 @@ def command(lang, model=MODEL, level=DEFAULT_LEVEL):
         "--append-system-prompt",
         f"Write the explanations and the ✅ line in {lang}, even though the "
         f"Chinese is in another language. Do not explain in Chinese unless "
-        f"{lang} is Chinese." + level_rules(level),
+        f"{lang} is Chinese."
+        + rules("levels", level, LEVELS, DEFAULT_LEVEL)
+        + rules("regions", region, REGIONS, DEFAULT_REGION),
     ]
 
 
@@ -63,6 +68,10 @@ def parse_output(output):
     output = output.strip()
     if output == NOTHING_TO_PROOFREAD:
         return None
+    # Told to write traditional characters, the model sometimes turns the
+    # heading too; the rest of the code looks for the fixed one.
+    if output.startswith(TRADITIONAL_BLOCK):
+        output = BLOCK + output[len(TRADITIONAL_BLOCK):]
     # Anything else means the model answered the prompt instead.
     if not output.startswith(BLOCK):
         raise RuntimeError("unexpected output")
@@ -75,12 +84,20 @@ def fit_language(block, lang):
     return KOREAN_LABEL.sub("", block)
 
 
-def proofread(prompt, lang, model=MODEL, cwd=None, level=DEFAULT_LEVEL):
+def fit_phonetic(block, phonetic):
+    # The model always writes pinyin; zhuyin is a fixed mapping from it.
+    if block is None or phonetic != "zhuyin":
+        return block
+    return convert_block(block)
+
+
+def proofread(prompt, lang, model=MODEL, cwd=None, level=DEFAULT_LEVEL,
+              region=DEFAULT_REGION, phonetic=DEFAULT_PHONETIC):
     """Returns the block, None if there is nothing to proofread, or raises
     RuntimeError with the reason."""
     try:
         result = subprocess.run(
-            command(lang, model, level),
+            command(lang, model, level, region),
             input=message(prompt),
             capture_output=True, text=True, encoding="utf-8",
             timeout=WORKER_TIMEOUT, cwd=cwd,
@@ -92,7 +109,8 @@ def proofread(prompt, lang, model=MODEL, cwd=None, level=DEFAULT_LEVEL):
         raise RuntimeError(f"timed out after {WORKER_TIMEOUT}s")
     if result.returncode != 0:
         raise RuntimeError(f"claude exited with {result.returncode}")
-    return fit_language(parse_output(result.stdout), lang)
+    return fit_phonetic(fit_language(parse_output(result.stdout), lang),
+                        phonetic)
 
 
 def record(block, lang):
@@ -109,10 +127,12 @@ def main():
     try:
         with open(running, encoding="utf-8") as f:
             job = json.load(f)
-        # A job written before levels existed proofreads at the default.
+        # A job written before these settings existed uses the defaults.
         block = proofread(job["prompt"], job["lang"],
                           cwd=os.path.dirname(running),
-                          level=job.get("level", DEFAULT_LEVEL))
+                          level=job.get("level", DEFAULT_LEVEL),
+                          region=job.get("region", DEFAULT_REGION),
+                          phonetic=job.get("phonetic", DEFAULT_PHONETIC))
         if block is not None:
             write_json(done, {"block": block})
             record(block, job["lang"])
