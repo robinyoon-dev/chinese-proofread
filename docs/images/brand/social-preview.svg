@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+<rect width="1280" height="640" fill="#F6F4EF"/>
+<defs><clipPath id="r"><rect width="512" height="512" rx="96"/></clipPath></defs>
+<g transform="translate(96 150) scale(0.664)" clip-path="url(#r)"><rect width="512" height="512" fill="#1E2027"/><path transform="translate(256 256) scale(0.27689 -0.27689) translate(-501.0 -380.5)" fill="#F6F4EF" d="M434 850V676H88V169H208V224H434V-89H561V224H788V174H914V676H561V850ZM208 342V558H434V342ZM788 342H561V558H788Z"/><g transform="translate(256 256) scale(1.08) translate(-256 -256)"><path d="M398 138C330 70 140 78 92 196C50 300 140 430 268 428C392 426 466 336 436 226C424 178 398 140 336 108" fill="none" stroke="#79B8FF" stroke-width="25.9" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+<g font-family="Noto Sans CJK SC">
+<text x="504" y="232" font-family="Noto Sans Mono CJK SC" font-weight="700" font-size="40" fill="#2A66AD">chinese-proofread</text>
+<text x="504" y="322" font-weight="700" font-size="48" fill="#1D1B18">Write prompts in Chinese.</text>
+<text x="504" y="388" font-weight="700" font-size="48" fill="#1D1B18">Proofread while Claude works.</text>
+<rect x="505" y="428" width="272" height="52" rx="28" fill="none" stroke="#C9C7C0" stroke-width="2"/>
+<text x="641" y="463" text-anchor="middle" font-size="25" fill="#4F5159">Claude Code plugin</text>
+</g></svg>
