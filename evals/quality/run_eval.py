@@ -120,9 +120,8 @@ SKIP = [
 ]
 
 # #34: run_worker_eval.py --lang english swaps each Korean-only grader for
-# the one here with the same name, so the metrics stay comparable. The
-# Korean label above the explanations is dropped for English
-# (fit_language), so the lines follow 修正 directly.
+# the one here with the same name, so the metrics stay comparable. Since
+# #35 fit_language() writes the label and the ✅ sentence in English.
 # A common function word, or three ASCII words in a row. Either alone misses
 # real English: "Taiwan uses traditional characters." has no function word,
 # and "variable is 变量(biànliàng) in Chinese." no three words in a row.
@@ -133,7 +132,7 @@ ENGLISH_WORDS = (r"(?:\b(?i:the|a|an|is|are|to|of|for|in|on|with|and|or|not|"
 ENGLISH_GRADERS = {
     "format-ok-first": regex("format-ok-first",
                              r"^\s*📝 中文校对: ✅ Looks natural\."),
-    "format-explain": regex("format-explain", r"^修正:.*\n- ", flags="m"),
+    "format-explain": regex("format-explain", r"^Explanation:", flags="m"),
     "overfix-no-note": regex("overfix-no-note", r"✅[^\n]*\n[ \t]*- ",
                              "not_contains"),
     # Stricter than explain-korean: every bullet line, not only the first,

@@ -19,30 +19,55 @@ import subprocess
 import sys
 
 from jobs import (BLOCK, DEFAULT_LEVEL, DEFAULT_PHONETIC, DEFAULT_REGION,
-                  INTERNAL_ENV, LEVELS, REGIONS, WORKER_TIMEOUT, append_history,
-                  write_json)
+                  INTERNAL_ENV, LEVELS, NOTHING_TO_FIX, REGIONS, WORKER_TIMEOUT,
+                  append_history, write_json)
 from zhuyin import convert_block
 
 MODEL = "sonnet"
 NOTHING_TO_PROOFREAD = "NONE"
 TRADITIONAL_BLOCK = BLOCK.replace("对", "對")
-# The label is part of the Korean template and the model does not translate it
-# reliably, so it is dropped for other languages. The lines below it still read
-# as explanations.
-KOREAN_LABEL = re.compile(r"^설명:[ \t]*\n", re.M)
+BARE_NOTHING_TO_FIX = re.compile(r"(?:📝[^\n:]*:\s*)?✅")
 PROMPTS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "prompts")
 PROMPT_FILE = os.path.join(PROMPTS_DIR, "proofread.md")
+# The rules stay in Korean; the examples are in the explanation language, and
+# any language without its own examples gets the English ones (#35).
+LANGUAGES = {"korean": "korean", "한국어": "korean",
+             "english": "english", "영어": "english"}
+EXAMPLE_LANGUAGE = "english"
+# The model did not write these two reliably in languages other than Korean
+# (#34), so the code adds them. A language not listed gets neither: a guessed
+# translation would be worse than none.
+LABELS = {"korean": "설명:", "english": "Explanation:"}
+NATURAL = {"korean": "자연스럽습니다.", "english": "Looks natural."}
+# A label the model wrote anyway, in whatever language.
+MODEL_LABEL = re.compile(r"^(?:설명|說明|说明|explanations?)[ \t]*[:：][ \t]*\n",
+                         re.M | re.I)
 
 
-def rules(folder, name, names, default):
+def language(lang):
+    return LANGUAGES.get(lang.strip().lower())
+
+
+def read_prompt(*parts):
+    path = os.path.join(PROMPTS_DIR, *parts)
+    if not os.path.exists(path):
+        return ""
+    with open(path, encoding="utf-8") as f:
+        return "\n\n" + f.read()
+
+
+def examples(lang, *parts):
+    return read_prompt("examples", language(lang) or EXAMPLE_LANGUAGE, *parts)
+
+
+def rules(folder, name, names, default, lang):
     # A default adds nothing, so it proofreads exactly as before. The name
     # becomes a path, so only a known name gets that far.
     if name == default or name not in names:
         return ""
-    with open(os.path.join(PROMPTS_DIR, folder, name + ".md"),
-              encoding="utf-8") as f:
-        return "\n\n" + f.read()
+    return (read_prompt(folder, name + ".md")
+            + examples(lang, folder, name + ".md"))
 
 
 def command(lang, model=MODEL, level=DEFAULT_LEVEL, region=DEFAULT_REGION):
@@ -52,11 +77,12 @@ def command(lang, model=MODEL, level=DEFAULT_LEVEL, region=DEFAULT_REGION):
         "--no-session-persistence", "--disable-slash-commands",
         "--system-prompt-file", PROMPT_FILE,
         "--append-system-prompt",
-        f"Write the explanations and the ✅ line in {lang}, even though the "
-        f"Chinese is in another language. Do not explain in Chinese unless "
-        f"{lang} is Chinese."
-        + rules("levels", level, LEVELS, DEFAULT_LEVEL)
-        + rules("regions", region, REGIONS, DEFAULT_REGION),
+        f"Write the explanations in {lang}, even though the Chinese is in "
+        f"another language. Do not explain in Chinese unless {lang} is "
+        f"Chinese."
+        + examples(lang, "proofread.md")
+        + rules("levels", level, LEVELS, DEFAULT_LEVEL, lang)
+        + rules("regions", region, REGIONS, DEFAULT_REGION, lang),
     ]
 
 
@@ -72,6 +98,11 @@ def parse_output(output):
     # heading too; the rest of the code looks for the fixed one.
     if output.startswith(TRADITIONAL_BLOCK):
         output = BLOCK + output[len(TRADITIONAL_BLOCK):]
+    # With the rules in Korean, the model sometimes wrote the ✅ line as a
+    # bare ✅ or with the heading translated (#35); the verdict is still that
+    # nothing needs fixing.
+    if BARE_NOTHING_TO_FIX.fullmatch(output):
+        return NOTHING_TO_FIX
     # Anything else means the model answered the prompt instead.
     if not output.startswith(BLOCK):
         raise RuntimeError("unexpected output")
@@ -79,9 +110,24 @@ def parse_output(output):
 
 
 def fit_language(block, lang):
-    if block is None or lang.strip().lower() in ("korean", "한국어"):
-        return block
-    return KOREAN_LABEL.sub("", block)
+    """Adds the label above the explanations and the sentence of the ✅ line
+    in the explanation language."""
+    if block is None:
+        return None
+    key = language(lang)
+    lines = block.split("\n")
+    if block.startswith(NOTHING_TO_FIX):
+        lines[0] = NOTHING_TO_FIX + (" " + NATURAL[key] if key else "")
+        return "\n".join(lines)
+    lines = MODEL_LABEL.sub("", block).split("\n")
+    if key:
+        for i, line in enumerate(lines):
+            if line.startswith("- "):
+                # Word lines stand alone, as in the format of mixed-in words.
+                if any(above.startswith("修正") for above in lines[:i]):
+                    lines.insert(i, LABELS[key])
+                break
+    return "\n".join(lines)
 
 
 def fit_phonetic(block, phonetic):
