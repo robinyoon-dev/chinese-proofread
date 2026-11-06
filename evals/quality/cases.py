@@ -634,6 +634,111 @@ REGION_CASES = [
 ]
 
 
+# English speakers' errors (#34). Only run_worker_eval.py runs these, with
+# --learner, and they replace the cases above there, so the main numbers keep
+# their denominators. The ok cases use the same patterns correctly, to catch
+# overcorrection. They run at every level.
+LEARNER_CASES = [
+    {
+        # Time phrase after the verb, as in English.
+        "name": "learner-time-order",
+        "kind": "fix",
+        "prompt": "我修改了这个函数在昨天，现在测试失败了。",
+        "expect": "我昨天修改了这个函数 (시간어는 동사 앞)",
+        "files": {},
+        "graders": [fixed_in(r"函数在昨天")],
+    },
+    {
+        # Place phrase after the verb.
+        "name": "learner-place-order",
+        "kind": "fix",
+        "prompt": "请运行测试在服务器上。",
+        "expect": "请在服务器上运行测试。 (장소어는 동사 앞)",
+        "files": {},
+        "graders": [fixed_in(r"测试在服务器")],
+    },
+    {
+        "name": "learner-shi-adjective",
+        "kind": "fix",
+        "prompt": "这个页面是很慢，帮我看看为什么。",
+        "expect": "这个页面很慢 (형용사 술어 앞에 是를 쓰지 않음)",
+        "files": {},
+        "graders": [fixed_in(r"是很慢")],
+    },
+    {
+        "name": "learner-no-measure-word",
+        "kind": "fix",
+        "prompt": "帮我给这个函数写三测试。",
+        "expect": "三个测试 (양사 필요)",
+        "files": {},
+        "graders": [fixed_in(r"三测试")],
+    },
+    {
+        "name": "learner-er-for-liang",
+        "kind": "fix",
+        "prompt": "这个函数需要二个参数。",
+        "expect": "两个参数 (양사 앞에서는 两)",
+        "files": {},
+        "graders": [fixed_in(r"二个")],
+    },
+    {
+        "name": "learner-le-after-negation",
+        "kind": "fix",
+        "prompt": "我没有运行了测试，你帮我运行一下。",
+        "expect": "我没有运行测试 (没有 뒤에는 了를 쓰지 않음)",
+        "files": {},
+        "graders": [fixed_in(r"没有运行了")],
+    },
+    {
+        # 和 joins nouns, not clauses or verb phrases as "and" does.
+        "name": "learner-he-for-clauses",
+        "kind": "fix",
+        "prompt": "我写了新的函数和运行了所有的测试。",
+        "expect": "我写了新的函数，还运行了所有的测试 (和는 동사구를 잇지 않음)",
+        "files": {},
+        "graders": [fixed_in(r"函数和运行")],
+    },
+    {
+        "name": "learner-ma-with-question-word",
+        "kind": "fix",
+        "prompt": "这个函数是做什么的吗？",
+        "expect": "这个函数是做什么的？ (의문사와 吗를 함께 쓰지 않음)",
+        "files": {},
+        "graders": [fixed_in(r"什么的吗")],
+    },
+    {
+        # 再 is for a repeat still to come; a past one takes 又.
+        "name": "learner-zai-for-you",
+        "kind": "fix",
+        "prompt": "测试昨天再失败了，帮我看看日志。",
+        "expect": "测试昨天又失败了 (지난 반복은 又)",
+        "files": {},
+        "graders": [fixed_in(r"再失败")],
+    },
+    {
+        "name": "learner-ok-order",
+        "kind": "ok",
+        "prompt": "我昨天在服务器上运行了测试，但是失败了。",
+        "files": {},
+        "graders": [],
+    },
+    {
+        "name": "learner-ok-measure-word",
+        "kind": "ok",
+        "prompt": "帮我给这个函数加两个参数。",
+        "files": {},
+        "graders": [],
+    },
+    {
+        "name": "learner-ok-adjective",
+        "kind": "ok",
+        "prompt": "这个页面太慢了，帮我看看为什么。",
+        "files": {},
+        "graders": [],
+    },
+]
+
+
 def at_level(case, level):
     """The case as it runs at level, or None if it does not run there."""
     if "kinds" not in case:
