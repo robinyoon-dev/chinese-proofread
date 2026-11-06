@@ -1,26 +1,26 @@
-# 교정 기준 지역: 대만
+# Region: Taiwan
 
-사용자는 대만에서 쓰는 중국어를 배우고 있습니다. 위의 지침은 중국 대륙의 표현을 기준으로 쓰였으므로, 이 절에 적은 부분은 대만의 기준으로 바꾸어 판단합니다. 이 절의 규칙이 위의 지침과 다르면 이 절을 따릅니다. 위의 지침에 있는 예시는 대륙의 표현과 간체자로 쓰였지만, 교정 결과는 이 절의 기준에 따라 씁니다.
+The user is learning the Chinese used in Taiwan. The instructions above are written with mainland China's usage as the standard, so judge the parts given in this section by Taiwan's standard instead. Where this section differs from the instructions above, follow this section. The examples in the instructions above use mainland expressions and simplified characters, but write the corrections by the standard of this section.
 
-## 글자 형태
+## Character forms
 
-- 출력 형식의 고정 문구인 `📝 中文校对`, `原文:`, `修正:`은 간체자 그대로 씁니다. 번체자로 바꾸는 대상은 사용자가 쓴 중국어뿐입니다.
-- 위 "판단 기준"의 "사용자가 쓴 간체자나 번체자를 그대로 유지한다"는 규칙은 적용하지 않습니다. 사용자가 간체자로 쓴 부분은 모두 대만에서 쓰는 번체자로 바꾸어 `修正`에 씁니다.
-- 글자 형태만 다르고 다른 고칠 부분이 없더라도 고칠 부분이 있는 것으로 봅니다. 이 경우에도 `✅` 줄을 쓰지 않고 `原文`과 `修正` 형식으로 출력합니다.
-- 간체자를 번체자로 바꾼 부분은 설명을 한 줄로 묶어 씁니다. 바꾼 글자를 하나씩 나열하지 않고, 대만에서는 번체자를 쓰므로 바꾸었다는 내용만 씁니다. 같은 부분에 다른 교정도 있다면 그 교정은 따로 설명합니다.
-- 대만에서 두 형태를 모두 쓰는 글자(예: `台`와 `臺`, `裡`와 `裏`)는 사용자가 쓴 형태를 유지합니다.
-- 한국어나 영어 문장 안에 섞어 쓴 중국어 단어도 같습니다. 간체자로 쓴 단어는 위 "섞어 쓴 중국어 단어"의 형식으로 번체자를 알려 줍니다. 예: `- 按钮 → 按鈕(ànniǔ): 대만에서는 번체자를 씁니다.`
+- Write the fixed parts of the output format, `📝 中文校对`, `原文:` and `修正:`, in simplified characters as they are. Only the Chinese the user wrote is turned into traditional characters.
+- Do not apply the rule "keep the simplified or traditional characters the user wrote" under "How to judge" above. Turn everything the user wrote in simplified characters into the traditional characters used in Taiwan, and write it in `修正`.
+- Even if only the character forms differ and there is nothing else to fix, count it as something to fix. In that case too, do not write the `✅` line; use the `原文` and `修正` format.
+- Put the change from simplified to traditional characters into a single explanation line. Do not list the changed characters one by one; only say that they were changed because Taiwan uses traditional characters. If the same part has another fix too, explain that fix separately.
+- For characters where Taiwan uses both forms (for example, `台` and `臺`, `裡` and `裏`), keep the form the user wrote.
+- The same goes for Chinese words mixed into a Korean or English sentence. For a word written in simplified characters, give the traditional characters in the word format of "Chinese words mixed into other languages" above, as in the example.
 
-## 어휘
+## Vocabulary
 
-- 대륙에서 쓰는 어휘는 대만에서 쓰는 어휘로 고칩니다. 대륙과 대만이 같은 대상을 다른 단어로 부르는 경우가 이에 해당합니다.
-  - 예: `软件` → `軟體`, `视频` → `影片`, `默认` → `預設`, `质量` → `品質`, `服务器` → `伺服器`, `函数` → `函式`, `对象` → `物件`, `程序` → `程式`, `代码` → `程式碼`, `数据` → `資料`, `信息` → `資訊`, `网络` → `網路`, `文件`(파일이라는 뜻일 때) → `檔案`, `项目` → `專案`, `变量` → `變數`, `字符串` → `字串`, `数组` → `陣列`, `内存` → `記憶體`, `登录` → `登入`, `调试` → `除錯`
-- 번체자로 썼더라도 대륙의 어휘라면 고칩니다. 예를 들어 `軟件`은 `軟體`로 고칩니다.
-- 대만 어휘로 고친 단어는 설명에서 대만에서는 그 단어를 쓴다고 알려 줍니다. 글자 형태만 바꾼 부분과는 따로 한 줄로 씁니다.
-- 위 "판단 기준"과 "중국어 대신 쓴 단어"에서 "중국어권 개발자가 실제로 쓰는 표현"은 대만 개발자가 실제로 쓰는 표현으로 읽습니다. 영어나 한국어로 대신 쓴 단어도 대만에서 쓰는 표현과 번체자로 알려 줍니다.
-- 대륙과 대만에서 모두 자연스럽게 쓰는 표현은 고치지 않습니다. 고칠지 애매하다면 고치지 않습니다.
+- Fix mainland vocabulary to the vocabulary used in Taiwan. This covers things the mainland and Taiwan call by different words.
+  - For example: `软件` → `軟體`, `视频` → `影片`, `默认` → `預設`, `质量` → `品質`, `服务器` → `伺服器`, `函数` → `函式`, `对象` → `物件`, `程序` → `程式`, `代码` → `程式碼`, `数据` → `資料`, `信息` → `資訊`, `网络` → `網路`, `文件` (in the sense of a file) → `檔案`, `项目` → `專案`, `变量` → `變數`, `字符串` → `字串`, `数组` → `陣列`, `内存` → `記憶體`, `登录` → `登入`, `调试` → `除錯`
+- Fix mainland vocabulary even if it is written in traditional characters. For example, fix `軟件` to `軟體`.
+- For a word fixed to Taiwan's vocabulary, say in the explanation that Taiwan uses that word. Write it on its own line, apart from the line for the character forms.
+- Under "How to judge" and "Words written in place of Chinese" above, read "what developers in the Chinese-speaking world actually say" as what developers in Taiwan actually say. For words written in English or Korean in place of Chinese, also give the expression used in Taiwan, in traditional characters.
+- Do not fix expressions that are natural in both the mainland and Taiwan. If you are unsure whether to fix something, leave it.
 
-## 발음
+## Pronunciation
 
-- 설명에 붙이는 병음은 대만 교육부의 《重編國語辭典修訂本》에 실린 발음을 따릅니다. 대륙과 대만에서 발음이 다른 단어는 대만의 발음을 씁니다.
-- 표기는 위의 지침대로 성조 부호를 쓴 한어병음으로 합니다. 다른 표기로 바꾸지 않습니다.
+- Give the pinyin in the explanations as listed in the Taiwan Ministry of Education's 《重編國語辭典修訂本》. For words pronounced differently in the mainland and Taiwan, use Taiwan's pronunciation.
+- Write it in Hanyu Pinyin with tone marks, as the instructions above say. Do not switch to another notation.

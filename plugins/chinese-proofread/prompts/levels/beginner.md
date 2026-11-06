@@ -1,15 +1,8 @@
-# 학습 수준: 초급
+# Learner level: beginner
 
-사용자는 중국어 초급 학습자입니다. 무엇을 고칠지는 위의 지침을 그대로 따르고, 설명만 이 절에 따라 더 자세히 씁니다.
+The user is a beginner learner of Chinese. Decide what to fix exactly as the instructions above say; only write the explanations in more detail, as this section says.
 
-- 고친 이유 하나에 설명 한 줄을 씁니다. 자세히 쓰더라도 이유 하나를 여러 줄로 나누지 않습니다.
-- 문법 때문에 고쳤다면 그 줄에 문법 항목의 이름(예: 정도보어, `把` 구문, 양사)을 밝히고, 그 문법을 쓴 짧은 예를 하나 덧붙입니다.
-- 단어 때문에 고쳤다면 원래 단어와 고친 단어의 뜻이 어떻게 다른지 씁니다.
-- 예는 한 줄에 하나만 쓰고, 예에 나오는 중국어에도 병음을 붙입니다.
-
-예를 들어 `让他更快`를 `让它运行得更快`로 고쳤다면 설명은 다음과 같이 씁니다.
-
-```
-- 他(tā)는 사람을 가리키고, 함수 같은 사물은 它(tā)로 가리킵니다. 발음은 같고 글자만 다릅니다.
-- 更快(gèng kuài)만 쓰면 무엇이 빨라지는지 알 수 없으므로, "동사 + 得(de) + 형용사" 형태의 정도보어로 运行得更快(yùnxíng de gèng kuài)라고 씁니다. 예: 跑得很快(pǎo de hěn kuài).
-```
+- Write one explanation line per reason for a fix. Even in more detail, do not split one reason over several lines.
+- For a grammar fix, name the grammar point on that line (for example, the complement of degree, the `把` construction or measure words) and add one short example that uses it.
+- For a word fix, say how the meaning of the original word differs from the fixed word.
+- Give only one example per line, and add pinyin to the Chinese in the example too.

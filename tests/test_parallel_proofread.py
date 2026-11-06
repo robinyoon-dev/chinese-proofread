@@ -86,8 +86,8 @@ class Base(unittest.TestCase):
 
 class WorkerTest(Base):
     def run_worker(self, lang="Korean", level=None, region=None,
-                   phonetic=None, **env):
-        job = {"prompt": "让他更快", "lang": lang}
+                   phonetic=None, prompt="让他更快", **env):
+        job = {"prompt": prompt, "lang": lang}
         for key, value in [("level", level), ("region", region),
                            ("phonetic", phonetic)]:
             if value is not None:
@@ -109,17 +109,57 @@ class WorkerTest(Base):
         self.assertEqual(self.result(), {"block": BLOCK})
         self.assertEqual(self.files(), ["1.json"])
 
-    def test_label_stays_for_korean(self):
-        block = "📝 中文校对\n修正: 让它更快\n설명:\n- 사물은 它입니다.\n---"
+    def test_label_is_added_in_the_explanation_language(self):
+        for lang, label in [("Korean", "설명:"), (" english ", "Explanation:")]:
+            with self.subTest(lang=lang):
+                self.run_worker(
+                    lang=lang,
+                    FAKE_OUTPUT="📝 中文校对\n修正: 让它更快\n- 它(tā)\n---")
+                self.assertEqual(self.result(), {
+                    "block": f"📝 中文校对\n修正: 让它更快\n{label}\n- 它(tā)\n---"})
+
+    def test_label_of_the_model_is_replaced(self):
+        for written in ["설명:", "Explanation:", "Explanations：", "설명:"]:
+            with self.subTest(written=written):
+                self.run_worker(
+                    lang="English",
+                    FAKE_OUTPUT=f"📝 中文校对\n修正: 让它更快\n{written}\n- Use 它.\n---")
+                self.assertEqual(self.result(), {
+                    "block": "📝 中文校对\n修正: 让它更快\nExplanation:\n- Use 它.\n---"})
+
+    def test_word_lines_get_no_label(self):
+        block = "📝 中文校对\n- 按键 → 按钮(ànniǔ): 버튼입니다.\n---"
         self.run_worker(FAKE_OUTPUT=block)
         self.assertEqual(self.result(), {"block": block})
 
-    def test_label_is_dropped_for_other_languages(self):
+    def test_other_languages_get_no_label(self):
         self.run_worker(
-            lang="English",
-            FAKE_OUTPUT="📝 中文校对\n修正: 让它更快\n설명:\n- Use 它.\n---")
-        self.assertEqual(
-            self.result(), {"block": "📝 中文校对\n修正: 让它更快\n- Use 它.\n---"})
+            lang="Japanese",
+            FAKE_OUTPUT="📝 中文校对\n修正: 让它更快\n설명:\n- 它を使います。\n---")
+        self.assertEqual(self.result(), {
+            "block": "📝 中文校对\n修正: 让它更快\n- 它を使います。\n---"})
+
+    def test_natural_line_is_written_in_the_explanation_language(self):
+        for lang, line in [("Korean", "📝 中文校对: ✅ 자연스럽습니다."),
+                           ("English", "📝 中文校对: ✅ Looks natural."),
+                           ("Japanese", "📝 中文校对: ✅")]:
+            for output in ["📝 中文校对: ✅", "📝 中文校对: ✅ 자연스럽습니다.",
+                           "📝 中文校对: ✅ 自然流畅"]:
+                with self.subTest(lang=lang, output=output):
+                    self.run_worker(lang=lang, FAKE_OUTPUT=output)
+                    self.assertEqual(self.result(), {"block": line})
+
+    def test_examples_follow_the_explanation_language(self):
+        for lang, example in [("Korean", "사물을 가리킬 때는"),
+                              ("English", "to refer to a thing"),
+                              ("Japanese", "to refer to a thing")]:
+            with self.subTest(lang=lang):
+                self.run_worker(lang=lang, level="beginner", region="taiwan")
+                prompt = self.system_prompt()
+                self.assertIn(f"explanations in {lang}", prompt)
+                self.assertIn(example, prompt)
+        self.assertNotIn("사물", prompt)
+        self.assertNotIn("대만", prompt)
 
     def test_nothing_to_proofread_leaves_no_result(self):
         self.run_worker(FAKE_OUTPUT="NONE\n")
@@ -208,19 +248,19 @@ class WorkerTest(Base):
         with_level = self.system_prompt()
         self.run_worker()
         self.assertEqual(self.system_prompt(), with_level)
-        self.assertNotIn("학습 수준", with_level)
+        self.assertNotIn("# Learner level", with_level)
 
     def test_level_rules_are_appended(self):
-        for level, title in [("beginner", "초급"), ("advanced", "고급")]:
+        for level in ["beginner", "advanced"]:
             with self.subTest(level=level):
                 self.run_worker(level=level)
                 prompt = self.system_prompt()
-                self.assertIn("✅ line in Korean", prompt)
-                self.assertIn(f"# 학습 수준: {title}", prompt)
+                self.assertIn("explanations in Korean", prompt)
+                self.assertIn(f"# Learner level: {level}", prompt)
 
     def test_unknown_level_in_a_job_is_the_default(self):
         self.run_worker(level="../proofread")
-        self.assertNotIn("학습 수준", self.system_prompt())
+        self.assertNotIn("# Learner level", self.system_prompt())
         self.assertEqual(self.result(), {"block": BLOCK})
 
     def test_default_region_adds_no_rules(self):
@@ -228,18 +268,19 @@ class WorkerTest(Base):
         with_region = self.system_prompt()
         self.run_worker()
         self.assertEqual(self.system_prompt(), with_region)
-        self.assertNotIn("교정 기준 지역", with_region)
+        self.assertNotIn("# Region", with_region)
 
     def test_region_rules_are_appended_after_the_level(self):
         self.run_worker(level="advanced", region="taiwan")
         prompt = self.system_prompt()
-        self.assertIn("✅ line in Korean", prompt)
-        self.assertLess(prompt.index("# 학습 수준: 고급"),
-                        prompt.index("# 교정 기준 지역: 대만"))
+        self.assertIn("explanations in Korean", prompt)
+        self.assertLess(prompt.index("# Learner level: advanced"),
+                        prompt.index("# Region: Taiwan"))
 
     def test_unknown_region_in_a_job_is_the_default(self):
         self.run_worker(region="../levels/advanced")
-        self.assertNotIn("# ", self.system_prompt())
+        self.assertNotIn("# Region", self.system_prompt())
+        self.assertNotIn("# Learner level", self.system_prompt())
         self.assertEqual(self.result(), {"block": BLOCK})
 
     def test_zhuyin_replaces_the_pinyin(self):
@@ -290,16 +331,17 @@ class WorkerTest(Base):
         self.assertFalse(os.path.exists(running))
 
     def test_claude_runs_isolated_with_the_prompt_on_stdin(self):
-        self.run_worker()
+        # Not a sentence from the examples in the instructions.
+        self.run_worker(prompt="把这个文件删掉")
         with open(self.log, encoding="utf-8") as f:
             call = json.load(f)
         self.assertEqual(call["internal"], "1")
-        self.assertIn("让他更快", call["stdin"])
+        self.assertIn("把这个文件删掉", call["stdin"])
         self.assertNotIn("--bare", call["args"])  # --bare never reads OAuth.
-        self.assertNotIn("让他更快", " ".join(call["args"]))
+        self.assertNotIn("把这个文件删掉", " ".join(call["args"]))
         for flag in ["--tools", "--setting-sources"]:
             self.assertEqual(call["args"][call["args"].index(flag) + 1], "")
-        self.assertIn("✅ line in Korean", " ".join(call["args"]))
+        self.assertIn("explanations in Korean", " ".join(call["args"]))
         self.assertTrue(os.path.exists(proofread_worker.PROMPT_FILE))
 
 
@@ -335,7 +377,8 @@ class DetectStartsJobTest(Base):
         self.submit("帮我重构一下这个函数", CHINESE_PROOFREAD_LEVEL=" Advanced ")
         self.wait_for_result()
         with open(self.log, encoding="utf-8") as f:
-            self.assertIn("# 학습 수준: 고급", " ".join(json.load(f)["args"]))
+            self.assertIn("# Learner level: advanced",
+                          " ".join(json.load(f)["args"]))
 
     def test_region_and_phonetic_reach_the_proofreading(self):
         self.submit("帮我重构一下这个函数", CHINESE_PROOFREAD_REGION="Taiwan",
@@ -343,7 +386,7 @@ class DetectStartsJobTest(Base):
                     FAKE_OUTPUT="📝 中文校对\n설명:\n- 函式(hánshì)\n---")
         self.wait_for_result()
         with open(self.log, encoding="utf-8") as f:
-            self.assertIn("# 교정 기준 지역: 대만",
+            self.assertIn("# Region: Taiwan",
                           " ".join(json.load(f)["args"]))
         result = [n for n in self.files() if n.endswith(".json")][0]
         with open(os.path.join(self.folder, result), encoding="utf-8") as f:

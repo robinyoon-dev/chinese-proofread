@@ -20,6 +20,7 @@ Usage:
   python3 evals/quality/run_worker_eval.py                  # sonnet, 1 run each
   python3 evals/quality/run_worker_eval.py --model haiku --runs 3
   python3 evals/quality/run_worker_eval.py --case 'fix-*'
+  python3 evals/quality/run_worker_eval.py --case 'fix-*,ok-colloquial'
   python3 evals/quality/run_worker_eval.py --level advanced --runs 3
   python3 evals/quality/run_worker_eval.py --region taiwan --runs 3
   python3 evals/quality/run_worker_eval.py --lang english --runs 3
@@ -182,7 +183,8 @@ def main():
                         type=str.lower)
     parser.add_argument("--learner", action="store_true",
                         help="run only the English speakers' error cases")
-    parser.add_argument("--case", help="only cases whose name matches this glob")
+    parser.add_argument("--case", help="only cases whose name matches one of "
+                        "these globs, separated by commas")
     parser.add_argument("--summary", metavar="WORKER_JSON",
                         help="only summarize an earlier worker.json")
     args = parser.parse_args()
@@ -192,8 +194,9 @@ def main():
 
     if args.learner and args.region == "taiwan":
         sys.exit("the learner cases are in simplified characters")
+    globs = args.case.split(",") if args.case else ["*"]
     cases = [c for c in cases_at(args.level, args.region, args.learner)
-             if not args.case or fnmatch.fnmatch(c["name"], args.case)]
+             if any(fnmatch.fnmatch(c["name"], g.strip()) for g in globs)]
     if not cases:
         sys.exit(f"no case matches {args.case}")
     jobs = [(c, args.model, run, args.level, args.region, args.lang)

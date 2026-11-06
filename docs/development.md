@@ -37,9 +37,10 @@ plugins/chinese-proofread/
   hooks/zhuyin.py                          교정 블록의 병음을 주음부호로 바꾸는 코드
   scripts/toggle.py                        교정 기능의 상태를 바꾸는 스크립트
   scripts/history.py                       교정 이력에서 요약할 설명 줄을 뽑는 스크립트
-  prompts/proofread.md                     교정 규칙과 출력 형식
+  prompts/proofread.md                     교정 규칙과 출력 형식 (영어)
   prompts/levels/                          기본값이 아닌 학습 수준에서 덧붙이는 교정 규칙
   prompts/regions/                         기본값이 아닌 지역에서 덧붙이는 교정 규칙
+  prompts/examples/<언어>/                 설명 언어별 출력 예시 (korean, english)
   skills/toggle/SKILL.md                   교정 기능을 켜고 끄는 명령
   skills/history/SKILL.md                  교정 이력을 요약하는 명령
 tests/test_detect_chinese.py               중국어 판별 스크립트의 테스트

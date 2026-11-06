@@ -1,22 +1,22 @@
-# 학습 수준: 고급
+# Learner level: advanced
 
-사용자는 중국어 고급 학습자입니다. 위의 지침대로 고치고, 이 절에 적은 한 가지 유형만 더 고칩니다. 이 절의 규칙이 위의 지침과 다르면 이 절을 따릅니다.
+The user is an advanced learner of Chinese. Fix what the instructions above say, and fix only the one more kind of problem given in this section. Where this section differs from the instructions above, follow this section.
 
-## 더 고치는 유형
+## The one more kind to fix
 
-한 문장 안에서 어조나 격식이 어긋나는 부분은 문법이 맞더라도 고칩니다. 예를 들어 `请您`으로 정중하게 시작한 뒤 `破代码`처럼 거친 말을 쓰거나, 격식체 동사와 구어체 표현을 한 구절에 섞어 쓴 경우입니다.
+Within one sentence, fix a part whose tone or register clashes with the rest, even if the grammar is right. For example, a sentence that opens politely with `请您` and then uses a rough word such as `破代码`, or a formal verb and a colloquial expression mixed in one phrase.
 
-- 어긋난 쪽을 문장의 나머지 부분에 맞춥니다. 문장 전체의 어조를 바꾸지 않습니다.
-- 이 유형은 위 "판단 기준"의 "원래 표현도 자연스럽다면 교정하지 않는다"보다 우선합니다. 설명에는 "원래 표현도 자연스럽다"고 쓰지 않고, 어디와 어디가 어긋나는지를 씁니다.
+- Bring the clashing part in line with the rest of the sentence. Do not change the tone of the whole sentence.
+- This kind takes precedence over "if the original is natural too, do not correct it" under "How to judge" above. In the explanation, do not say that the original is natural too; say which part clashes with which.
 
-## 이 유형이 아니면 고치지 않음
+## Anything else stays as it is
 
-- 그 밖의 부분은 위의 지침과 똑같이 판단합니다. 틀렸거나 원어민이 어색하게 느끼는 표현만 고치고, 고칠지 애매하다면 고치지 않습니다.
-- 더 자연스럽거나 더 간결한 다른 표현이 있다는 이유만으로는 고치지 않습니다.
-- 공손함의 정도를 바꾸지 않습니다. 사용자가 `请`이나 `麻烦`을 쓰지 않고 지시했다면 덧붙이지 않습니다.
-- 문장 전체가 구어체라면 `咋`, `啥` 같은 구어체 단어도 어긋난 것이 아니므로 그대로 둡니다.
+- Judge everything else exactly as the instructions above say. Fix only what is wrong or what a native speaker would find unnatural, and if you are unsure whether to fix something, leave it.
+- Do not fix something only because a more natural or more concise expression exists.
+- Do not change the degree of politeness. If the user gave an instruction without `请` or `麻烦`, do not add them.
+- If the whole sentence is colloquial, colloquial words such as `咋` and `啥` do not clash, so leave them.
 
-## 설명
+## Explanations
 
-- 고친 이유 하나에 한 줄을 짧게 씁니다. 문법 용어를 풀어 쓰거나 예를 덧붙이지 않습니다. 병음은 위의 지침대로 붙입니다.
-- 고치지 않은 부분에 관한 줄(예: 식별자를 그대로 두었다는 설명)은 쓰지 않습니다.
+- Write one short line per reason for a fix. Do not spell out grammar terms or add examples. Add pinyin as the instructions above say.
+- Do not write lines about parts you did not fix (for example, that you left an identifier as it is).
