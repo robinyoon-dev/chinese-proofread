@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/brand/icon.png" width="128" alt="chinese-proofread 아이콘">
+</p>
+
 # chinese-proofread
 
 Claude Code에 중국어로 요청을 입력하면, 별도의 교정 에이전트가 작업과 동시에 그 문장이 자연스러운지 점검하여 결과를 화면에 보여 주는 플러그인입니다. 작업은 Claude가 평소처럼 진행합니다.
