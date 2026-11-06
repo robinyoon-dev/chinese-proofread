@@ -50,6 +50,14 @@ ALLOWED_TOOLS = ["Read", "Edit", "Write", "Glob", "Grep", "Skill"]
 TONE_MARKS = "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ"
 FILE_END = "__EVAL_FILE_END__"
 NO_WORKER = "import os, sys\nos.remove(sys.argv[1])\n"
+# #36: the eval cannot pass CHINESE_PROOFREAD_LANG, and its graders check for
+# Korean, so the copy keeps Korean as the default. It also leaves out the
+# state file, where the language skill may have saved another language.
+JOBS_SETTINGS = {
+    'DEFAULT_LANGUAGE = "English"': 'DEFAULT_LANGUAGE = "Korean"',
+    'STATE_PATH = os.path.expanduser("~/.claude/chinese-proofread/state.json")':
+        "STATE_PATH = os.devnull",
+}
 
 # Metric prefixes of grader names, in report order.
 METRICS = {
@@ -88,7 +96,7 @@ SAME_AS_ORIGINAL = regex("overfix-not-same", r"^原文: ?(.+?)\s*\n修正: ?\1\s
 PINYIN_NOT_NUMERIC = regex(
     "pinyin-not-numeric", r"\([a-zü]+[1-5](?: [a-zü]+[1-5])*\)", "not_contains")
 # #2: the block explains in CHINESE_PROOFREAD_LANG. The eval runs with it
-# unset, so this checks for Korean.
+# unset and Korean as the default (JOBS_SETTINGS), so this checks for Korean.
 # An explanation line, word line, or ✅ line with no Hangul fails
 # explain-korean. It checks only what the block holds, so a reply without a
 # block is left out of its count instead of failing it.
@@ -415,6 +423,17 @@ def remove_workspace(path):
     shutil.rmtree(path, ignore_errors=True)
 
 
+def set_korean_default(path):
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    for old, new in JOBS_SETTINGS.items():
+        if old not in text:
+            sys.exit(f"{path} no longer has: {old}")
+        text = text.replace(old, new)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--model", default="sonnet")
@@ -449,6 +468,7 @@ def main():
         with open(os.path.join(copy, "hooks", "proofread_worker.py"), "w",
                   encoding="utf-8") as f:
             f.write(NO_WORKER)
+        set_korean_default(os.path.join(copy, "hooks", "jobs.py"))
         for case in cases:
             write_case(case, os.path.join(copy, "evals"))
 

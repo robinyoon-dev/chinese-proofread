@@ -21,7 +21,8 @@ makes Claude rewrite a final reply that came out in Chinese anyway.
 Env:
   CHINESE_PROOFREAD_ENABLED      set to 0 to keep proofreading off
   CHINESE_PROOFREAD_LANG         language for the explanations in the
-                                 proofreading block (default: Korean)
+                                 proofreading block (default: English, or
+                                 what the language skill saved)
   CHINESE_PROOFREAD_CHAT_LANG    language for replies to the user: unset for
                                  CHINESE_PROOFREAD_LANG, "prompt" for the
                                  language of the request, or a language name
@@ -42,11 +43,9 @@ import os
 import subprocess
 import sys
 
-from jobs import (INTERNAL_ENV, REPLY_FILE, level, new_job, phonetic, region,
-                  session_dir, sweep, write_json)
+from jobs import (INTERNAL_ENV, REPLY_FILE, language, level, new_job,
+                  phonetic, read_state, region, session_dir, sweep, write_json)
 
-# Keep in sync with STATE_PATH in scripts/toggle.py.
-STATE_PATH = os.path.expanduser("~/.claude/chinese-proofread/state.json")
 WORKER = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                       "proofread_worker.py")
 
@@ -58,11 +57,7 @@ def count(text, *ranges):
 def enabled():
     if os.environ.get("CHINESE_PROOFREAD_ENABLED") == "0":
         return False
-    try:
-        with open(STATE_PATH, encoding="utf-8") as f:
-            return json.load(f).get("enabled") is not False
-    except (OSError, ValueError, AttributeError):
-        return True
+    return read_state().get("enabled") is not False
 
 
 def env_number(name, default, convert):
@@ -146,8 +141,7 @@ def practicing_note():
             "practicing Chinese and did not ask for a reply in Chinese.")
 
 
-def chat_instruction():
-    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
+def chat_instruction(lang):
     return (
         f"write everything you say to the user {chat_language(lang)}, "
         "including direct answers to questions, progress updates, questions "
@@ -193,7 +187,7 @@ def main():
     min_hanzi = env_number("CHINESE_PROOFREAD_MIN_HANZI", 4, int)
     min_hanzi_mixed = env_number("CHINESE_PROOFREAD_MIN_HANZI_MIXED", 1, int)
     hanzi_ratio = env_number("CHINESE_PROOFREAD_HANZI_RATIO", 0.0, float)
-    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
+    lang = language()
 
     chinese = is_chinese(prompt, min_hanzi, min_hanzi_mixed, hanzi_ratio)
     expect_reply_language(data.get("session_id"), prompt,
@@ -214,7 +208,7 @@ def main():
         "answer in the language of the user's own words: add 中 to the list "
         "and translate \"你好\" to English both get a reply in English. "
         "Otherwise, the reply language rule applies: "
-        + chat_instruction()
+        + chat_instruction(lang)
         + " "
         + practicing_note()
     )

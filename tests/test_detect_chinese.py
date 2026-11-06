@@ -119,11 +119,18 @@ class HookTest(unittest.TestCase):
         output = json.loads(self.run_prompt("帮我重构一下这个函数"))["hookSpecificOutput"]
         self.assertEqual(output["hookEventName"], "UserPromptSubmit")
         self.assertIn("do not proofread", output["additionalContext"])
-        self.assertIn("in Korean", output["additionalContext"])
+        self.assertIn("in English", output["additionalContext"])
 
     def test_lang(self):
-        output = self.run_prompt("帮我重构一下这个函数", CHINESE_PROOFREAD_LANG="English")
-        self.assertIn("in English", output)
+        output = self.run_prompt("帮我重构一下这个函数", CHINESE_PROOFREAD_LANG="Korean")
+        self.assertIn("in Korean", output)
+
+    def test_lang_from_state_file(self):
+        # #36: the language skill saves it; the variable still comes first.
+        self.write_state('{"lang": "Korean"}')
+        self.assertIn("user in Korean", self.chat_context())
+        self.assertIn("user in Japanese",
+                      self.chat_context(CHINESE_PROOFREAD_LANG="Japanese"))
 
     def test_quoted_chinese_keeps_the_usual_reply_language(self):
         # Design decision 15: without Chinese of the user's own the plugin
@@ -150,12 +157,12 @@ class HookTest(unittest.TestCase):
         return context.split("the reply language rule applies:", 1)[1]
 
     def test_chat_lang_default(self):
-        self.assertIn("user in Korean", self.chat_context())
+        self.assertIn("user in English", self.chat_context())
         self.assertIn(
-            "user in English", self.chat_context(CHINESE_PROOFREAD_LANG="English")
+            "user in Korean", self.chat_context(CHINESE_PROOFREAD_LANG="Korean")
         )
         self.assertIn(
-            "user in Korean", self.chat_context(CHINESE_PROOFREAD_CHAT_LANG=" ")
+            "user in English", self.chat_context(CHINESE_PROOFREAD_CHAT_LANG=" ")
         )
 
     def test_chat_lang_prompt(self):

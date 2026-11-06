@@ -7,6 +7,10 @@ start with the time, so sorting them gives the order of the prompts.
 
 Corrections also go to a file per month in HISTORY_DIR, which stays after the
 jobs are swept.
+
+STATE_PATH keeps what the skills change: whether proofreading is on, and the
+settings. A setting comes from its environment variable first, then from
+STATE_PATH, then from its default.
 """
 
 import datetime
@@ -16,7 +20,7 @@ import shutil
 import time
 import uuid
 
-# Keep the parent folder in sync with STATE_PATH in scripts/toggle.py.
+STATE_PATH = os.path.expanduser("~/.claude/chinese-proofread/state.json")
 JOBS_DIR = os.path.expanduser("~/.claude/chinese-proofread/jobs")
 HISTORY_DIR = os.path.expanduser("~/.claude/chinese-proofread/history")
 HISTORY_VERSION = 1
@@ -36,6 +40,8 @@ REGIONS = ("mainland", "taiwan")
 DEFAULT_REGION = "mainland"
 PHONETICS = ("pinyin", "zhuyin")
 DEFAULT_PHONETIC = "pinyin"
+DEFAULT_LANGUAGE = "English"
+ENV_PREFIX = "CHINESE_PROOFREAD_"
 
 
 def session_dir(session_id):
@@ -58,22 +64,59 @@ def jobs(path, suffix):
     return [os.path.join(path, n) for n in names if n.endswith(suffix)]
 
 
-def setting(name, values, default):
-    # An unknown value proofreads as before instead of failing the hook.
-    value = os.environ.get(name, "").strip().lower()
-    return value if value in values else default
+def read_state():
+    try:
+        with open(STATE_PATH, encoding="utf-8") as f:
+            state = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return state if isinstance(state, dict) else {}
+
+
+def write_state(**changes):
+    """Sets the given keys and keeps the rest. A value of None removes the
+    key."""
+    state = read_state()
+    state.update(changes)
+    state = {k: v for k, v in state.items() if v is not None}
+    os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
+    write_json(STATE_PATH, state)
+
+
+def setting(key, values, default):
+    """Reads CHINESE_PROOFREAD_<KEY>, then key in STATE_PATH. With values, the
+    value is lowercased and must be one of them; without, any text counts."""
+    def clean(value):
+        if not isinstance(value, str):
+            return None
+        value = value.strip()
+        if values is None:
+            return value or None
+        value = value.lower()
+        # An unknown value proofreads as before instead of failing the hook.
+        return value if value in values else None
+
+    found = clean(os.environ.get(ENV_PREFIX + key.upper()))
+    if found is None:
+        found = clean(read_state().get(key))
+    return default if found is None else found
+
+
+def language():
+    """The language of the explanations in the proofreading block."""
+    return setting("lang", None, DEFAULT_LANGUAGE)
 
 
 def level():
-    return setting("CHINESE_PROOFREAD_LEVEL", LEVELS, DEFAULT_LEVEL)
+    return setting("level", LEVELS, DEFAULT_LEVEL)
 
 
 def region():
-    return setting("CHINESE_PROOFREAD_REGION", REGIONS, DEFAULT_REGION)
+    return setting("region", REGIONS, DEFAULT_REGION)
 
 
 def phonetic():
-    return setting("CHINESE_PROOFREAD_PHONETIC", PHONETICS, DEFAULT_PHONETIC)
+    return setting("phonetic", PHONETICS, DEFAULT_PHONETIC)
 
 
 def write_json(path, value):

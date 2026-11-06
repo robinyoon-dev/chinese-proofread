@@ -424,8 +424,8 @@ class DetectStartsJobTest(Base):
 
     def test_expected_reply_language(self):
         cases = [
-            ({}, "Korean"),
-            ({"CHINESE_PROOFREAD_LANG": "English"}, "English"),
+            ({}, "English"),
+            ({"CHINESE_PROOFREAD_LANG": "Korean"}, "Korean"),
             ({"CHINESE_PROOFREAD_CHAT_LANG": "Japanese"}, "Japanese"),
             ({"CHINESE_PROOFREAD_CHAT_LANG": "prompt"}, None),
             ({"CHINESE_PROOFREAD_CHAT_LANG": "Simplified Chinese"}, None),
@@ -649,7 +649,62 @@ class HistoryFileTest(unittest.TestCase):
         self.assertEqual(entry["time"], "2026-10-31T23:59:59+09:00")
 
 
-class LevelTest(unittest.TestCase):
+class SettingTest(unittest.TestCase):
+    """#36: a setting comes from its variable, then STATE_PATH, then the
+    default."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.path = os.path.join(tmp.name, "chinese-proofread", "state.json")
+        patcher = mock.patch("jobs.STATE_PATH", self.path)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, text):
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        with open(self.path, "w", encoding="utf-8") as f:
+            f.write(text)
+
+    def test_state_file_comes_after_the_environment(self):
+        self.write(json.dumps({"lang": "Korean", "level": "advanced"}))
+        with mock.patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(jobs.language(), "Korean")
+            self.assertEqual(jobs.level(), "advanced")
+            self.assertEqual(jobs.region(), "mainland")
+        env = {"CHINESE_PROOFREAD_LANG": " Japanese ",
+               "CHINESE_PROOFREAD_LEVEL": "beginner"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertEqual(jobs.language(), "Japanese")
+            self.assertEqual(jobs.level(), "beginner")
+
+    def test_bad_values_fall_through(self):
+        env = {"CHINESE_PROOFREAD_LANG": " ", "CHINESE_PROOFREAD_LEVEL": "hsk4"}
+        for text in ['{"lang": 3, "level": "hsk4"}', "[]", "not json",
+                     '{"lang": "", "level": null}']:
+            self.write(text)
+            with self.subTest(text=text), \
+                    mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(jobs.language(), "English")
+                self.assertEqual(jobs.level(), "intermediate")
+
+    def test_write_state_keeps_the_other_keys(self):
+        jobs.write_state(enabled=False)
+        jobs.write_state(lang="Korean")
+        self.assertEqual(jobs.read_state(), {"enabled": False, "lang": "Korean"})
+        jobs.write_state(lang=None)
+        self.assertEqual(jobs.read_state(), {"enabled": False})
+
+
+class DefaultsTest(unittest.TestCase):
+    def setUp(self):
+        # The developer's own state file must not change the defaults.
+        patcher = mock.patch("jobs.STATE_PATH", os.devnull)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+class LevelTest(DefaultsTest):
     def test_level_comes_from_the_environment(self):
         cases = [(None, "intermediate"), ("beginner", "beginner"),
                  ("ADVANCED", "advanced"), ("hsk4", "intermediate"),
@@ -661,7 +716,7 @@ class LevelTest(unittest.TestCase):
                 self.assertEqual(jobs.level(), expected)
 
 
-class RegionTest(unittest.TestCase):
+class RegionTest(DefaultsTest):
     def test_region_comes_from_the_environment(self):
         cases = [(None, "mainland"), ("taiwan", "taiwan"),
                  (" TAIWAN ", "taiwan"), ("hongkong", "mainland")]
