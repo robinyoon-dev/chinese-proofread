@@ -188,7 +188,7 @@ class CommandTest(unittest.TestCase):
         for arg in ("week", "0", "99999999999999"):
             out = self.run_script(arg)
             self.assertIn("Usage: /chinese-proofread:history [days|all]", out)
-            self.assertIn("Chat reply language: Korean", out)
+            self.assertIn("Chat reply language: English", out)
 
     def test_reports_recording_is_off(self):
         out = self.run_script(CHINESE_PROOFREAD_HISTORY="0")
@@ -199,8 +199,8 @@ class CommandTest(unittest.TestCase):
         self.assertIn("Unreadable records skipped: 1", self.run_script())
 
     def test_chat_language_follows_the_settings(self):
-        out = self.run_script(CHINESE_PROOFREAD_LANG="English")
-        self.assertIn("Chat reply language: English", out)
+        out = self.run_script(CHINESE_PROOFREAD_LANG="Korean")
+        self.assertIn("Chat reply language: Korean", out)
         out = self.run_script(CHINESE_PROOFREAD_CHAT_LANG="prompt")
         self.assertIn("Chat reply language: same as the prompt", out)
 

@@ -9,37 +9,27 @@ Usage: toggle.py [on|off|status]   (no argument flips the current state)
 Env:
   CHINESE_PROOFREAD_ENABLED    set to 0 to keep proofreading off regardless
                                of the state file
-  CHINESE_PROOFREAD_LANG       shown as the explanation language
+  CHINESE_PROOFREAD_LANG       shown as the explanation language, before
+                               the one the language skill saved
   CHINESE_PROOFREAD_CHAT_LANG  shown as the chat reply language
 """
 
-import json
 import os
 import sys
 
-# Keep in sync with STATE_PATH in hooks/detect_chinese.py.
-STATE_PATH = os.path.expanduser("~/.claude/chinese-proofread/state.json")
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hooks"))
+
+import jobs  # noqa: E402
 
 
 def read_enabled():
-    try:
-        with open(STATE_PATH, encoding="utf-8") as f:
-            return json.load(f).get("enabled") is not False
-    except (OSError, ValueError, AttributeError):
-        return True
-
-
-def write_enabled(enabled):
-    os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
-    tmp = STATE_PATH + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump({"enabled": enabled}, f)
-    os.replace(tmp, STATE_PATH)
+    return jobs.read_state().get("enabled") is not False
 
 
 def languages():
     """Returns the explanation language and the chat reply language."""
-    lang = os.environ.get("CHINESE_PROOFREAD_LANG", "Korean")
+    lang = jobs.language()
     chat_lang = os.environ.get("CHINESE_PROOFREAD_CHAT_LANG", "").strip()
     if not chat_lang:
         chat_lang = lang
@@ -60,7 +50,7 @@ def main():
             print("Proofreading is " + ("on." if enabled else "off."))
         else:
             enabled = {"on": True, "off": False, "flip": not enabled}[action]
-            write_enabled(enabled)
+            jobs.write_state(enabled=enabled)
             print("Proofreading turned " + ("on." if enabled else "off."))
 
         if os.environ.get("CHINESE_PROOFREAD_ENABLED") == "0":

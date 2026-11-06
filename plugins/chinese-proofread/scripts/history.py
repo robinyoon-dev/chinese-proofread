@@ -10,7 +10,8 @@ Usage: history.py [days|all]   (default: the last 7 days)
 Env:
   CHINESE_PROOFREAD_HISTORY    0 means new corrections are not being recorded
   CHINESE_PROOFREAD_CHAT_LANG  shown as the chat reply language
-  CHINESE_PROOFREAD_LANG       the chat reply language if the above is unset
+  CHINESE_PROOFREAD_LANG       the chat reply language if the above is unset,
+                               before the one the language skill saved
 """
 
 import datetime
