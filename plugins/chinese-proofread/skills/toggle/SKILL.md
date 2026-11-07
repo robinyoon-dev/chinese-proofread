@@ -1,17 +1,17 @@
 ---
 name: toggle
-description: 중국어 입력 교정 기능을 켜거나 끄고, 현재 상태를 확인한다. 사용자가 /chinese-proofread:toggle 명령을 직접 입력했을 때만 실행한다.
+description: Turn Chinese input proofreading on or off, or check its current state. Run only when the user types the /chinese-proofread:toggle command.
 disable-model-invocation: true
 argument-hint: "[on|off|status]"
 allowed-tools: Bash(python3:*)
 ---
 
-# 교정 기능 켜고 끄기
+# Turn proofreading on or off
 
-아래는 교정 기능의 상태를 바꾸거나 확인하는 스크립트를 실행한 결과입니다.
+Below is the output of the script that changes or checks the state of proofreading.
 
 !`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/toggle.py $ARGUMENTS`
 
-- 이 결과를 사용자에게 한두 문장으로 전달합니다. 전달할 때는 결과의 `Chat reply language` 줄에 적힌 언어를 쓰고, 그 줄이 `same as the prompt`라면 사용자가 이 대화에서 쓰는 언어를 씁니다. `Explanation language` 줄과 `Chat reply language` 줄은 사용자에게 보여 주지 않습니다.
-- 상태는 이미 바뀌었으므로 도구를 호출하지 않습니다.
-- 결과에 사용법이 출력되었다면, 사용할 수 있는 인자가 `on`, `off`, `status`이고 인자를 생략하면 상태가 반대로 바뀐다는 점을 알려 줍니다.
+- Report this result to the user in one or two sentences. Write your reply in the language given on the `Chat reply language` line of the output; if that line says `same as the prompt`, use the language the user writes in during this conversation. Do not show the `Explanation language` and `Chat reply language` lines to the user, and do not mention the language of chat replies.
+- The state has already changed, so do not call any tools.
+- If the output shows usage, tell the user that the available arguments are `on`, `off`, and `status`, and that omitting the argument flips the current state.
