@@ -1224,3 +1224,45 @@ Opus에서 두 번 거부된 뒤 작업을 멈춘 문제를 고치려고, 커밋
 - 실행 횟수가 적으므로, 스킬 응답의 실패율은 대략적인 값입니다.
 - `history` 스킬은 실행하지 않았습니다.
 - Opus는 측정하지 않았습니다.
+
+## Issue #47: 스킬 본문의 언어와 스킬 응답 언어
+
+- **날짜**: 2026-11-07
+- **대상**: `fix/47-skill-reply-language` 브랜치의 커밋 전 작업 트리입니다.
+- **Claude Code**: 2.1.319, WSL2
+- **메인 모델**: Sonnet 5.5(`claude-sonnet-5-5`)
+- **변경**: `language`와 `toggle` 스킬의 `SKILL.md`에서 `description`과 본문을 영어로 옮겼습니다. 지시의 내용은 바꾸지 않았습니다.
+- **조건**: #36과 같은 방식으로, 대화형 세션을 `tmux`로 띄우는 임시 드라이버를 썼습니다(저장소에 넣지 않음). 플러그인 사본의 `STATE_PATH`, `JOBS_DIR`, `HISTORY_DIR`을 임시 폴더로 바꾸고, 교정 프로세스는 아무것도 하지 않는 스크립트로 바꾸었습니다. 설치된 플러그인은 `--settings`로 끄고 사본만 `--plugin-dir`로 불러왔습니다. 실행마다 새 세션을 열었고, `CHINESE_PROOFREAD_LANG`과 `CHINESE_PROOFREAD_CHAT_LANG`은 설정하지 않았습니다. Korean 설정은 실행 전에 `state.json`에 `{"lang": "Korean"}`을 써서 만들었습니다.
+- **판정**: 세션 기록에서 메인 모델이 쓴 텍스트를 모아 판정했습니다. 기준은 #36과 같습니다. 영어를 기대할 때는 한자가 10자 이상이거나 한글이 있으면 실패이고, 한국어를 기대할 때는 한글이 한자보다 많아야 통과입니다.
+
+### 결과
+
+| 스킬 실행 | 설정 | 기대한 응답 언어 | #36(한국어 본문) | #47(영어 본문) |
+|---|---|---|---|---|
+| `/chinese-proofread:language` (상태 확인) | English | 영어 | 9회 중 7회 | 9/9 |
+| `/chinese-proofread:language reset` | Korean → English | 영어 | 4회 중 3회 | 4/4 |
+| `/chinese-proofread:toggle status` | English | 영어 | 5회 중 5회 | 5/5 |
+| `/chinese-proofread:language korean` | English → Korean | 한국어 | 4회 중 4회 | 4/4 |
+| `/chinese-proofread:language` (상태 확인) | Korean | 한국어 | 측정하지 않음 | 5/5 |
+| `/chinese-proofread:toggle status` | Korean | 한국어 | 측정하지 않음 | 5/5 |
+
+`language korean`을 실행한 뒤에는 `state.json`에 `{"lang": "Korean"}`이 저장되었고, `language reset`을 실행한 뒤에는 `lang` 키가 지워졌습니다.
+
+Korean 설정의 `toggle status`는 5회 중 4회가 "설명과 답변 모두 한국어로 제공됩니다"처럼 대화 응답의 언어를 언급했습니다. 언급한 내용은 사실과 맞았지만, `language` 스킬에는 대화 응답의 언어를 언급하지 말라는 지시가 있고 `toggle` 스킬에는 없었습니다. 그래서 `toggle`에도 같은 지시를 더하고 `toggle status`만 다시 측정했습니다.
+
+| 설정 | 기대한 응답 언어 | 결과 | 대화 응답 언어를 언급한 횟수 |
+|---|---|---|---|
+| English | 영어 | 5/5 | 0회 |
+| Korean | 한국어 | 5/5 | 0회(지시를 더하기 전에는 4회) |
+
+### 결과 해석
+
+- **스킬 본문을 영어로 옮기자 English 설정에서 한국어로 답한 경우가 없어졌습니다.** #36에서는 영어를 기대한 스킬 실행 13회 중 3회가 한국어로 답했지만, 이번에는 같은 조건의 18회가 모두 영어였습니다.
+- **본문이 영어여도 Korean 설정에서는 한국어로 답했습니다.** Korean 설정의 14회가 모두 한국어였으므로, 응답 언어는 스크립트 결과의 `Chat reply language` 줄을 따른 것으로 보입니다. 따라서 `SKILL.md`를 설명 언어별로 두 벌 두지 않아도 됩니다.
+- **지시를 덜 지킨 답변이 1회 있었습니다.** English 설정의 상태 확인 1회에서 "any change applies from your next input"이라고 덧붙였습니다. 지시는 언어를 바꾸었을 때만 이 문장을 쓰라고 합니다. 응답 언어와는 관계가 없으므로 이번에는 고치지 않았습니다.
+
+### 한계
+
+- 실행 횟수가 적으므로, 실패율은 대략적인 값입니다. #36의 수치는 `SKILL.md`의 문구를 고치는 도중에 측정한 값도 섞여 있으므로, 두 측정은 같은 조건의 비교가 아닙니다.
+- `history` 스킬은 아직 영어로 옮기지 않았고, 측정하지 않았습니다.
+- Opus는 측정하지 않았습니다.
